@@ -1,0 +1,22 @@
+{
+    "name": "lemon/easy-xmpp",
+    "description": "PHP library for XMPP",
+    "keywords": [
+        "easyxmpp",
+        "easy-xmpp",
+        "xmpp"
+    ],
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Mark.Wang",
+            "email": "332778006@qq.com"
+        }
+    ],
+    "autoload": {
+        "psr-4": {
+            "EasyXmpp\\": "src/"
+        }
+    },
+    "require": {}
+}
