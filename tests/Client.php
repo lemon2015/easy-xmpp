@@ -7,14 +7,8 @@ use EasyXmpp\Util\Log;
 use EasyXmpp\Exceptions\Exception;
 use EasyXmpp\Support\Config;
 
-//$host = 'test2.bangwo8.com';
-//$host = 'notify.bangwo8.com';
-//$host = 'im.bangwo8.com';
 $host = 'munclewang.cn';
-//$host = 'localhost';
 $port = 5222;
-//$user = 'kf_bw8admin2';
-//$pwd  = md5($user . 'var sRand=0x1E9D8F7B;');
 $user = 'mark1';
 $pwd = 123456;
 $conn = new XMPP($host, $port, $user, $pwd, 'xmpp', '', $printlog = true, $loglevel = Log::DEBUG);
