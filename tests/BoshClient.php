@@ -1,4 +1,5 @@
 <?php
+// todo  bug exists...
 require dirname(__DIR__)."/vendor/autoload.php";
 
 use EasyXmpp\BOSH;
