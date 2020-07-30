@@ -5,6 +5,7 @@ namespace EasyXmpp;
 use EasyXmpp\Stream\XMLStream;
 use EasyXmpp\XEP\Roster;
 use EasyXmpp\Util\Log;
+use EasyXmpp\Exceptions\Exception;
 
 /**
  * Class XMPP
@@ -350,7 +351,7 @@ class XMPP extends XMLStream
         $this->log->log("Auth failed!", Log::ERROR);
         $this->disconnect();
 
-        throw new XMPPHP_Exception('Auth failed!');
+        throw new Exception('Auth failed!');
     }
 
     /**
@@ -370,7 +371,6 @@ class XMPP extends XMLStream
         foreach ($matches[1] as $k => $v) {
             $vars[$v] = (empty($matches[2][$k]) ? $matches[3][$k] : $matches[2][$k]);
         }
-
         if (isset($vars['nonce'])) {
             // First step
             $vars['cnonce'] = uniqid(mt_rand(), false);
