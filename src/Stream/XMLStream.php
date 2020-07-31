@@ -238,7 +238,7 @@ class XMLStream
             $this->doReconnect();
             return false;
         }
-        //add fflush method to prevent msg blocked in socket buffer £¬causing delay, especially in long run env
+        //add fflush method to prevent msg blocked in socket buffer ï¼Œcausing delay, especially in long run env
         @fflush($this->socket);
         $this->log->log("Successfully sent $sentbytes bytes.", Log::DEBUG);
         return $sentbytes;
