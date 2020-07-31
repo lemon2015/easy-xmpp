@@ -1,32 +1,28 @@
 <?php
 
-require dirname(__DIR__)."/vendor/autoload.php";
+require 'vendor/autoload.php';
 
 use EasyXmpp\XMPP;
 use EasyXmpp\Util\Log;
-use EasyXmpp\Exceptions\Exception;
-use EasyXmpp\Support\Config;
 
 $config = [
-    "host"=>"munclewang.cn",
-    "port"=>"5222",
-    "user"=>"mark",
-    "password"=>"123456",
-    "resource"=>"cli",
-    "server"=>"",// ÄÚÍøÅäip
-    "printlog"=>true,
-    "loglevel"=>Log::DEBUG,
-    "timeout"=>30,
-    "persistent"=>true
+        "host"=>"munclewang.cn",
+        "port"=>"5222",
+        "user"=>"mark",
+        "password"=>"123456",
+        "resource"=>"cli",
+        "server"=>"",// ÄÚÍøÅäip
+        "printlog"=>true,
+        "loglevel"=>Log::DEBUG,
+        "timeout"=>30,
+        "persistent"=>true
 ];
 
 $conn = new XMPP($config);
 $conn->autoSubscribe();
-
 $vcard_request = array();
-
 try {
-    $conn->connect();
+    $conn->connect($config['timeout'],$config['persistent']);
     while (!$conn->isDisconnected()) {
         $payloads = $conn->processUntil(array('message', 'presence', 'end_stream', 'session_start', 'vcard','reconnect'));
         foreach ($payloads as $event) {
@@ -99,3 +95,5 @@ try {
 } catch (Exception $e) {
     die($e->getMessage().PHP_EOL);
 }
+
+

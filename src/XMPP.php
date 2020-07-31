@@ -68,26 +68,27 @@ class XMPP extends XMLStream
     protected $auth_mechanism_preferred = 'DIGEST-MD5';
 
     /**
-     * Constructor
-     *
-     * @param string $host
-     * @param integer $port
-     * @param string $user
-     * @param string $password
-     * @param string $resource
-     * @param string $server
-     * @param boolean $printlog
-     * @param string $loglevel
+     * XMPP constructor.
+     * @param $config
      */
-    public function __construct($host, $port, $user, $password, $resource, $server = null, $printlog = false, $loglevel = null)
+    public function __construct($config)
     {
+        $host = $config['host'];
+        $port = $config['port'];
+        $user = $config['user'];
+        $password = $config['password'];
+        $resource = $config['resource'];
+        $server = $config['server'];
+        $printlog = $config['printlog'];
+        $loglevel = $config['loglevel'];
         parent::__construct($host, $port, $printlog, $loglevel);
 
         $this->user = $user;
         $this->password = $password;
         $this->resource = $resource;
-        if (!$server)
+        if (!$server) {
             $server = $host;
+        }
         $this->server = $server;
         $this->basejid = $this->user . '@' . $this->host;
 
