@@ -69,7 +69,7 @@ class BOSH extends XMPP
         if ($this->sid)
             $xml->addAttribute('sid', $this->sid);
         #if($this->sid) $xml->addAttribute('xmlns', 'http://jabber.org/protocol/httpbind');
-        $xml->addAttribute('xml:lang', 'en','xml');
+        $xml->addAttribute('xml:lang', 'en', 'xml');
         if ($sub) { // ok, so simplexml is lame
             $p = dom_import_simplexml($xml);
             $c = dom_import_simplexml($sub);
@@ -132,7 +132,7 @@ class BOSH extends XMPP
         }
     }
 
-    public function send($msg,$timeout = NULL)
+    public function send($msg, $timeout = NULL)
     {
         $this->log->log("SEND: $msg", Log::DEBUG);
         $msg = new \SimpleXMLElement($msg);
