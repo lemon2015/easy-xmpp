@@ -143,14 +143,14 @@ class XMLStream
      * @param string $loglevel
      * @param boolean $is_server
      */
-    public function __construct($host = null, $port = null, $printlog = false, $loglevel = null, $is_server = false)
+    public function __construct($host = null, $port = null, $printlog = false, $loglevel = null, $is_server = false, $logfile = "")
     {
         $this->reconnect = !$is_server;
         $this->is_server = $is_server;
         $this->host = $host;
         $this->port = $port;
         $this->setupParser();
-        $this->log = new Log($printlog, $loglevel);
+        $this->log = new Log($printlog, $loglevel, $logfile);
     }
 
     /**

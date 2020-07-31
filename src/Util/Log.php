@@ -29,6 +29,10 @@ class Log
      * @var boolean
      */
     protected $printout;
+    /**
+     * @var string
+     */
+    protected $logfile;
 
     /**
      * Constructor
@@ -36,10 +40,11 @@ class Log
      * @param boolean $printout
      * @param string $runlevel
      */
-    public function __construct($printout = false, $runlevel = self::NOTICE)
+    public function __construct($printout = false, $runlevel = self::NOTICE, $logfile = "")
     {
         $this->printout = (boolean)$printout;
         $this->runlevel = (int)$runlevel;
+        $this->logfile = $logfile;
     }
 
     /**
@@ -60,8 +65,8 @@ class Log
     protected function writeLine($msg, $runlevel, $time)
     {
         $log = date('Y-m-d H:i:s', $time)." [".$this->names[$runlevel]."] ".$msg.PHP_EOL;
-        echo $log;
-        flush();
+        $logfile = $this->logfile ?: "/tmp/xmpp.log";
+        error_log($log,3,$logfile);
     }
 
     /**
