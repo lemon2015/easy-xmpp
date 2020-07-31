@@ -1,16 +1,16 @@
 # Easy-XMPPHP
 XMPP library (based on xmpphp)
 
-## »·¾³ÐèÇó
+## çŽ¯å¢ƒéœ€æ±‚
 PHP > 5.x
 
-## °²×°
+## å®‰è£…
 
 ```shell
 $ composer require "mark-fish/easy-xmpp"
 ```
 
-## Ê¹ÓÃ
+## ä½¿ç”¨
 
 ```php
 use EasyXmpp\XMPP;
