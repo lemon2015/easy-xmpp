@@ -7,11 +7,20 @@ use EasyXmpp\Util\Log;
 use EasyXmpp\Exceptions\Exception;
 use EasyXmpp\Support\Config;
 
-$host = 'munclewang.cn';
-$port = 5222;
-$user = 'mark1';
-$pwd = 123456;
-$conn = new XMPP($host, $port, $user, $pwd, 'xmpp', '', $printlog = true, $loglevel = Log::DEBUG);
+$config = [
+    "host"=>"munclewang.cn",
+    "port"=>"5222",
+    "user"=>"mark",
+    "password"=>"123456",
+    "resource"=>"cli",
+    "server"=>"",// ÄÚÍøÅäip
+    "printlog"=>true,
+    "loglevel"=>Log::DEBUG,
+    "timeout"=>30,
+    "persistent"=>true
+];
+
+$conn = new XMPP($config);
 $conn->autoSubscribe();
 
 $vcard_request = array();

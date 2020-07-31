@@ -5,9 +5,21 @@ require dirname(__DIR__)."/vendor/autoload.php";
 use EasyXmpp\BOSH;
 use EasyXmpp\Util\Log;
 use EasyXmpp\Exceptions\Exception;
-use EasyXmpp\Support\Config;
 
-$conn = new BOSH('munclewang.cn', 5280, 'mark1', 123456, 'bosh', '', $printlog = true, $loglevel = Log::DEBUG);
+$config = [
+    "host"=>"munclewang.cn",
+    "port"=>"5222",
+    "user"=>"mark",
+    "password"=>"123456",
+    "resource"=>"cli",
+    "server"=>"",// ÄÚÍøÅäip
+    "printlog"=>true,
+    "loglevel"=>Log::DEBUG,
+    "timeout"=>30,
+    "persistent"=>true
+];
+
+$conn = new BOSH($config);
 $conn->autoSubscribe();
 
 try {
