@@ -5,13 +5,13 @@ namespace EasyXmpp\Util;
 class Log
 {
     const EMERGENCY = 0;
-    const ALERT     = 1;
-    const CRITICAL  = 2;
-    const ERROR     = 3;
-    const WARNING   = 4;
-    const NOTICE    = 5;
-    const INFO      = 6;
-    const DEBUG     = 7;
+    const ALERT = 1;
+    const CRITICAL = 2;
+    const ERROR = 3;
+    const WARNING = 4;
+    const NOTICE = 5;
+    const INFO = 6;
+    const DEBUG = 7;
 
     /**
      * @var array
@@ -20,7 +20,7 @@ class Log
     /**
      * @var array
      */
-    protected $names = array('EMERGENCY','ALERT','CRITICAL','ERROR', 'WARNING','NOTICE','INFO', 'DEBUG');
+    protected $names = array('EMERGENCY', 'ALERT', 'CRITICAL', 'ERROR', 'WARNING', 'NOTICE', 'INFO', 'DEBUG');
     /**
      * @var integer
      */
@@ -64,9 +64,9 @@ class Log
 
     protected function writeLine($msg, $runlevel, $time)
     {
-        $log = date('Y-m-d H:i:s', $time)." [".$this->names[$runlevel]."] ".$msg.PHP_EOL;
+        $log = date('Y-m-d H:i:s', $time) . " [" . $this->names[$runlevel] . "] " . $msg . PHP_EOL;
         $logfile = $this->logfile ?: "/tmp/xmpp.log";
-        error_log($log,3,$logfile);
+        error_log($log, 3, $logfile);
     }
 
     /**

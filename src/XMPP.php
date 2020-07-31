@@ -2,10 +2,10 @@
 
 namespace EasyXmpp;
 
-use EasyXmpp\Stream\XMLStream;
-use EasyXmpp\XEP\Roster;
-use EasyXmpp\Util\Log;
 use EasyXmpp\Exceptions\Exception;
+use EasyXmpp\Stream\XMLStream;
+use EasyXmpp\Util\Log;
+use EasyXmpp\XEP\Roster;
 
 /**
  * Class XMPP
@@ -382,7 +382,7 @@ class XMPP extends XMLStream
                 $vars['digest-uri'] = 'xmpp/' . $this->server;
 
             // now, the magic...
-            $a1 = sprintf('%s:%s:%s', $this->user, isset($vars['realm']) ? $vars['realm'] : '' , $this->password);
+            $a1 = sprintf('%s:%s:%s', $this->user, isset($vars['realm']) ? $vars['realm'] : '', $this->password);
             if ($vars['algorithm'] == 'md5-sess') {
                 $a1 = pack('H32', md5($a1)) . ':' . $vars['nonce'] . ':' . $vars['cnonce'];
             }
