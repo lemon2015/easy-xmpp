@@ -5,19 +5,19 @@ require dirname(__DIR__)."/vendor/autoload.php";
 use EasyXmpp\XMPP;
 use EasyXmpp\Util\Log;
 use EasyXmpp\Exceptions\Exception;
-use EasyXmpp\Support\Config;
 
 $config = [
-    "host"=>"munclewang.cn",
+    "host"=>"xmpp-host",
     "port"=>"5222",
-    "user"=>"mark",
+    "user"=>"test",
     "password"=>"123456",
     "resource"=>"cli",
     "server"=>"",// ÄÚÍøÅäip
     "printlog"=>true,
     "loglevel"=>Log::DEBUG,
     "timeout"=>30,
-    "persistent"=>true
+    "persistent"=>true,
+    "logfile"=>"/tmp/xmpp-test.log"
 ];
 
 $conn = new XMPP($config);

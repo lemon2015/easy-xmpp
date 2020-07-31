@@ -79,9 +79,10 @@ class XMPP extends XMLStream
         $password = $config['password'];
         $resource = $config['resource'];
         $server = $config['server'];
-        $printlog = $config['printlog'];
-        $loglevel = $config['loglevel'];
-        parent::__construct($host, $port, $printlog, $loglevel);
+        $printlog = isset($config['printlog']) ? $config['printlog'] : false;
+        $loglevel = isset($config['loglevel']) ? $config['loglevel'] : 7;
+        $logfile = isset($config['logfile']) ? $config['logfile'] : "";
+        parent::__construct($host, $port, $printlog, $loglevel, false, $logfile);
 
         $this->user = $user;
         $this->password = $password;
