@@ -624,6 +624,7 @@ class XMLStream
         }
         $obj = new XMLObj($name, $ns, $attr);
         if ($this->xml_depth > 1) {
+            if(!isset($this->xmlobj[$this->xml_depth - 1])) $this->xmlobj[$this->xml_depth - 1] = new \stdClass();
             $this->xmlobj[$this->xml_depth - 1]->subs[] = $obj;
         }
         $this->xmlobj[$this->xml_depth] = $obj;
