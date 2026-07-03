@@ -5,6 +5,7 @@ namespace EasyXmpp;
 use EasyXmpp\Exceptions\Exception;
 use EasyXmpp\Stream\XMLStream;
 use EasyXmpp\Util\Log;
+use EasyXmpp\Util\LoggerInterface;
 use EasyXmpp\XEP\Roster;
 
 /**
@@ -82,7 +83,8 @@ class XMPP extends XMLStream
         $printlog = isset($config['printlog']) ? $config['printlog'] : false;
         $loglevel = isset($config['loglevel']) ? $config['loglevel'] : 7;
         $logfile = isset($config['logfile']) ? $config['logfile'] : "";
-        parent::__construct($host, $port, $printlog, $loglevel, false, $logfile);
+        $logger = isset($config['logger']) ? $config['logger'] : null;
+        parent::__construct($host, $port, $printlog, $loglevel, false, $logfile, $logger);
 
         $this->user = $user;
         $this->password = $password;
