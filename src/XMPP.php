@@ -512,4 +512,33 @@ class XMPP extends XMLStream
         $this->event('vcard', $vcard_array);
     }
 
+    /**
+     * Send a XMPP Ping to the server
+     */
+    public function ping($id = null)
+    {
+        if (!$id) {
+            $id = $this->getID();
+        }
+        // 注册 ID 回调，用于处理服务器返回的 pong 响应
+        $this->addIdHandler($id, "ping_response_handler");
+        // <iq type='get' to='example.com' id='f5805f84-1a09-4dee-a777-67bfc001e12c:ping' xmlns='jabber:client'><ping xmlns='urn:xmpp:ping'/></iq>
+        $xml = "<iq type='get' to='{$this->host}' id='{$id}'>";
+        $xml .= "<ping xmlns='urn:xmpp:ping'/>";
+        $xml .= "</iq>";
+        $this->send($xml);
+    }
+
+    /**
+     * 处理 ping 请求的响应
+     */
+    protected function ping_response_handler($xml)
+    {
+        // 获取所有属性，例如 id, from, to, type 等
+        $attrs = $xml->attrs;
+        $id = $attrs['id'] ?? "";
+        $this->log->log("Ping response: " . $id);
+        $this->event('pong', $id);
+    }
+
 }
