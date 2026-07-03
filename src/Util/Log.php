@@ -2,7 +2,7 @@
 
 namespace EasyXmpp\Util;
 
-class Log
+class Log implements LoggerInterface
 {
     const EMERGENCY = 0;
     const ALERT = 1;

@@ -4,6 +4,7 @@ namespace EasyXmpp\Stream;
 
 use EasyXmpp\Exceptions\Exception as MyException;
 use EasyXmpp\Util\Log;
+use EasyXmpp\Util\LoggerInterface;
 use EasyXmpp\Util\XMLObj;
 
 class XMLStream
@@ -137,20 +138,22 @@ class XMLStream
     /**
      * Constructor
      *
-     * @param string $host
-     * @param string $port
+     * @param string  $host
+     * @param string  $port
      * @param boolean $printlog
-     * @param string $loglevel
+     * @param string  $loglevel
      * @param boolean $is_server
+     * @param string  $logfile
+     * @param LoggerInterface|null $logger
      */
-    public function __construct($host = null, $port = null, $printlog = false, $loglevel = null, $is_server = false, $logfile = "")
+    public function __construct($host = null, $port = null, $printlog = false, $loglevel = null, $is_server = false, $logfile = "", ?LoggerInterface $logger = null)
     {
         $this->reconnect = !$is_server;
         $this->is_server = $is_server;
         $this->host = $host;
         $this->port = $port;
         $this->setupParser();
-        $this->log = new Log($printlog, $loglevel, $logfile);
+        $this->log = $logger ?? new Log($printlog, $loglevel, $logfile);
     }
 
     /**
