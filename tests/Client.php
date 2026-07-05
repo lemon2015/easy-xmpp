@@ -7,10 +7,10 @@ use EasyXmpp\Util\Log;
 use EasyXmpp\Exceptions\Exception;
 
 $config = [
-    "host"=>"xmpp-host",
-    "port"=>"5222",
-    "user"=>"test",
-    "password"=>"123456",
+    "host"=>"test2.bangwo8.com",
+    "port"=>"7222",
+    "user"=>"kf_bw8admin_wx",
+    "password"=>"UtilisateurDieu666",
     "resource"=>"cli",
     "server"=>"",// 内网配ip
     "printlog"=>true,

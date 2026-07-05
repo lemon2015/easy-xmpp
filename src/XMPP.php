@@ -474,6 +474,16 @@ class XMPP extends XMLStream
     }
 
     /**
+     * 重连：重置认证状态，确保重新走 SASL 认证流程
+     */
+    public function doReconnect()
+    {
+        $this->authed = false;
+        $this->session_started = false;
+        parent::doReconnect();
+    }
+
+    /**
      * TLS proceed handler
      *
      * @param string $xml
