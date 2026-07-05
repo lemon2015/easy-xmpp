@@ -28,6 +28,11 @@ $config = [
 $stat = ['recv' => 0, 'skip' => 0];
 
 // ---- 事件处理对象（addEventHandler 要求 obj->methodName($payload) 模式） ----
+function ts()
+{
+    return date('H:i:s');
+}
+
 class ForwarderHandler
 {
     public $stat = ['recv' => 0, 'skip' => 0];
@@ -37,9 +42,8 @@ class ForwarderHandler
     {
         $this->stat['recv']++;
         echo sprintf(
-            "[message] from=%s, type=%s, body=%s\n",
-            $payload['from'] ?? '-',
-            $payload['type'] ?? '-',
+            "[%s] [message] from=%s, type=%s, body=%s\n",
+            ts(), $payload['from'] ?? '-', $payload['type'] ?? '-',
             substr($payload['body'] ?? '', 0, 80)
         );
     }
@@ -47,24 +51,23 @@ class ForwarderHandler
     public function onPresence($payload)
     {
         echo sprintf(
-            "[presence] from=%s, show=%s, status=%s\n",
-            $payload['from'] ?? '-',
-            $payload['show'] ?? '-',
-            $payload['status'] ?? '-'
+            "[%s] [presence] from=%s, show=%s, status=%s\n",
+            ts(), $payload['from'] ?? '-', $payload['show'] ?? '-', $payload['status'] ?? '-'
         );
     }
 
     public function onReconnect($payload)
     {
-        echo "[reconnect] reconnected, re-sending presence\n";
-        $this->xmpp->presence();
+        echo sprintf("[%s] [reconnect] TCP reconnected, waiting for SASL auth...\n", ts());
+        // 不能在这里发 presence！重连后 SASL 认证还没走完
+        // 等 session_start 事件再发 presence
     }
 }
 
 $handler = new ForwarderHandler();
 
-echo "=== XMPP Forwarder Test ===\n";
-echo sprintf("Connecting to %s:%d as %s\n", $config['host'], $config['port'], $config['user']);
+echo sprintf("[%s] === XMPP Forwarder Test ===\n", ts());
+echo sprintf("[%s] Connecting to %s:%d as %s\n", ts(), $config['host'], $config['port'], $config['user']);
 
 try {
     $xmpp = new XMPP($config);
@@ -83,14 +86,14 @@ try {
     foreach ($payloads as $event) {
         if ($event[0] === 'session_start') {
             $xmpp->presence();
-            echo sprintf("Login success, user=%s\n", $xmpp->user);
+            echo sprintf("[%s] Login success, user=%s\n", ts(), $xmpp->user);
             $loginOk = true;
             break;
         }
     }
 
     if (!$loginOk) {
-        echo "Login failed: session_start timeout\n";
+        echo sprintf("[%s] Login failed: session_start timeout\n", ts());
         exit(1);
     }
 
@@ -98,23 +101,31 @@ try {
     $lastPing = time();
     $pingInterval = 60;
 
-    echo "Entering message loop (Ctrl+C to stop)...\n";
+    echo sprintf("[%s] Entering message loop (Ctrl+C to stop)...\n", ts());
 
     while (!$xmpp->isDisconnected()) {
-        $payloads = $xmpp->processUntil(['message', 'presence', 'reconnect'], 60);
+        $payloads = $xmpp->processUntil(['message', 'presence', 'reconnect', 'session_start'], 60);
 
         if (empty($payloads)) {
             // 空闲时发心跳
             if (time() - $lastPing >= $pingInterval) {
                 $xmpp->send(' ');
                 $lastPing = time();
-                echo "[ping] whitespace keepalive\n";
+                echo sprintf("[%s] [ping] whitespace keepalive\n", ts());
             }
             continue;
         }
 
         $lastPing = time();
-        // 事件已由 addEventHandler 注册的 handler 处理，此处无需再 dispatch
+
+        // 处理 session_start（重连后重新认证完成）
+        foreach ($payloads as $event) {
+            if ($event[0] === 'session_start') {
+                $xmpp->presence();
+                echo sprintf("[%s] [session_start] auth complete, presence sent\n", ts());
+            }
+        }
+        // 其他事件已由 addEventHandler 注册的 handler 处理
     }
 } catch (Exception $e) {
     echo 'Error: ' . $e->getMessage() . "\n";
