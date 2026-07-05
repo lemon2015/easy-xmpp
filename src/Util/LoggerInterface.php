@@ -10,5 +10,5 @@ interface LoggerInterface
      * @param string $message
      * @param int    $level   One of the Log::EMERGENCY, ..., Log::DEBUG constants
      */
-    public function log($message, $level);
+    public function log($message, $level = Log::NOTICE);
 }
