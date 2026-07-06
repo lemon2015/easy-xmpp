@@ -89,6 +89,7 @@ class XMPP extends XMLStream
         $this->user = $user;
         $this->password = $password;
         $this->resource = $resource;
+        $this->reconnect = isset($config['reconnect']) ? $config['reconnect'] : true;
         if (!$server) {
             $server = $host;
         }
