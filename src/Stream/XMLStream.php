@@ -420,6 +420,7 @@ class XMLStream
                 } else {
                     fclose($this->socket);
                     $this->socket = NULL;
+                    $this->disconnected = true;
                     return false;
                 }
             } else if ($updated > 0) {
@@ -431,6 +432,7 @@ class XMLStream
                     } else {
                         fclose($this->socket);
                         $this->socket = NULL;
+                        $this->disconnected = true;
                         return false;
                     }
                 }

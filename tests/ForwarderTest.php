@@ -23,6 +23,7 @@ $config = [
     'printlog' => true,
     'loglevel' => Log::DEBUG,
     'logfile'  => '/tmp/xmpp-forwarder-test.log',
+    'reconnect' => true
 ];
 
 $stat = ['recv' => 0, 'skip' => 0];
@@ -30,7 +31,7 @@ $stat = ['recv' => 0, 'skip' => 0];
 // ---- 事件处理对象（addEventHandler 要求 obj->methodName($payload) 模式） ----
 function ts()
 {
-    return date('H:i:s');
+    return date('Y-m-d H:i:s');
 }
 
 class ForwarderHandler
@@ -127,6 +128,8 @@ try {
         }
         // 其他事件已由 addEventHandler 注册的 handler 处理
     }
+
+    echo sprintf("[%s] disconnect exit...\n", ts());
 } catch (Exception $e) {
     echo 'Error: ' . $e->getMessage() . "\n";
     exit(1);
