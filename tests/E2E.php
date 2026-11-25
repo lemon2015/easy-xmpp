@@ -67,7 +67,7 @@ class E2ECaptureLogger extends AbstractLogger
         $this->file = $file;
     }
 
-    public function log($level, string|\Stringable $message, array $context = []): void
+    public function log($level, $message, array $context = []): void
     {
         $line = date('Y-m-d H:i:s') . " [$level] " . (string)$message . "\n";
         $this->lines[] = $line;

@@ -58,7 +58,8 @@ class Config implements ArrayAccess
      *
      * @since 5.0.0
      */
-    public function offsetGet($offset): mixed
+    #[\ReturnTypeWillChange]
+    public function offsetGet($offset)
     {
         return $this->get($offset);
     }
