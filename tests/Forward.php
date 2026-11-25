@@ -1,10 +1,6 @@
 <?php
 
-/**
- * 模拟 forwardKfMsgToWx.php 中 XmppListener 的 XMPP 连接和消息监听流程
- *
- * 用法: php tests/ForwarderTest.php
- */
+// 手动 XMPP 连接与消息监听测试：php tests/Forward.php
 
 require dirname(__DIR__) . '/vendor/autoload.php';
 

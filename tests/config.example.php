@@ -13,5 +13,5 @@ return [
     'printlog' => true,
     'loglevel' => \EasyXmpp\Util\Log::DEBUG,
     'logfile' => '/tmp/xmpp-test.log',
-    // 'reconnect' => true, // ForwarderTest.php 可按需开启
+    // 'reconnect' => true, // tests/Forward.php 可按需开启
 ];

@@ -147,7 +147,7 @@ XMPP_HOST=xmpp.example.com XMPP_USER=test-user XMPP_PASSWORD=... php tests/E2E.p
 
 常用变量：`XMPP_HOST`、`XMPP_USER`（必填），`XMPP_PORT`（默认 5222）、`XMPP_PASSWORD`、`XMPP_MUC_SERVICE`、`XMPP_PUBSUB_SERVICE`、`XMPP_PEER_USER`、`XMPP_TIMEOUT`、`XMPP_LOG`。
 
-`tests/Client.php` 和 `tests/ForwarderTest.php` 从 `tests/config.local.php` 读取配置：复制 `tests/config.example.php` 为 `tests/config.local.php` 并填写，后者已被 `.gitignore` 忽略。
+`tests/Client.php` 和 `tests/Forward.php` 从 `tests/config.local.php` 读取配置：复制 `tests/config.example.php` 为 `tests/config.local.php` 并填写，后者已被 `.gitignore` 忽略。
 
 ## MUC 房间（XEP-0045）
 
