@@ -4,7 +4,6 @@ namespace EasyXmpp\XEP;
 
 class Roster
 {
-
     /**
      * Roster array, handles contacts and presence.  Indexed by jid.
      * Contains array with potentially two indexes 'contact' and 'presence'
@@ -71,7 +70,11 @@ class Roster
                 $this->addContact($jid, 'not-in-roster');
             }
             $resource = $resource ? $resource : '';
-            $this->roster_array[$jid]['presence'][$resource] = array('priority' => $priority, 'show' => $show, 'status' => $status);
+            $this->roster_array[$jid]['presence'][$resource] = array(
+                'priority' => $priority,
+                'show' => $show,
+                'status' => $status,
+            );
         } else { //Nuke unavailable resources to save memory
             unset($this->roster_array[$jid]['resource'][$resource]);
         }
@@ -104,10 +107,22 @@ class Roster
         $split = explode("/", $jid);
         $jid = $split[0];
         if ($this->isContact($jid)) {
-            $current = array('resource' => '', 'active' => '', 'priority' => -129, 'show' => '', 'status' => ''); //Priorities can only be -128 = 127
+            $current = array(
+                'resource' => '',
+                'active' => '',
+                'priority' => -129,
+                'show' => '',
+                'status' => '',
+            ); // Priorities can only be -128 = 127
             foreach ($this->roster_array[$jid]['presence'] as $resource => $presence) {
                 //Highest available priority or just highest priority
-                if ($presence['priority'] > $current['priority'] and (($presence['show'] == "chat" or $presence['show'] == "available") or ($current['show'] != "chat" or $current['show'] != "available"))) {
+                if (
+                    $presence['priority'] > $current['priority']
+                    and (
+                        ($presence['show'] == "chat" or $presence['show'] == "available")
+                        or ($current['show'] != "chat" or $current['show'] != "available")
+                    )
+                ) {
                     $current = $presence;
                     $current['resource'] = $resource;
                 }
@@ -124,5 +139,4 @@ class Roster
     {
         return $this->roster_array;
     }
-
 }

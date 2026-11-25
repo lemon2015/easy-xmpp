@@ -4,7 +4,6 @@ namespace EasyXmpp;
 
 class BOSH extends XMPP
 {
-
     protected $rid;
     protected $jid;
     protected $sid;
@@ -46,26 +45,34 @@ class BOSH extends XMPP
 
     public function loadSession()
     {
-        if (isset($_SESSION['XMPPHP_BOSH_RID']))
+        if (isset($_SESSION['XMPPHP_BOSH_RID'])) {
             $this->rid = $_SESSION['XMPPHP_BOSH_RID'];
-        if (isset($_SESSION['XMPPHP_BOSH_SID']))
+        }
+        if (isset($_SESSION['XMPPHP_BOSH_SID'])) {
             $this->sid = $_SESSION['XMPPHP_BOSH_SID'];
-        if (isset($_SESSION['XMPPHP_BOSH_authed']))
+        }
+        if (isset($_SESSION['XMPPHP_BOSH_authed'])) {
             $this->authed = $_SESSION['XMPPHP_BOSH_authed'];
-        if (isset($_SESSION['XMPPHP_BOSH_jid']))
+        }
+        if (isset($_SESSION['XMPPHP_BOSH_jid'])) {
             $this->jid = $_SESSION['XMPPHP_BOSH_jid'];
-        if (isset($_SESSION['XMPPHP_BOSH_fulljid']))
+        }
+        if (isset($_SESSION['XMPPHP_BOSH_fulljid'])) {
             $this->fulljid = $_SESSION['XMPPHP_BOSH_fulljid'];
+        }
     }
 
     public function buildBody($sub = null)
     {
-        $xml = new \SimpleXMLElement("<body xmlns='http://jabber.org/protocol/httpbind' xmlns:xmpp='urn:xmpp:xbosh' />");
+        $xml = new \SimpleXMLElement(
+            "<body xmlns='http://jabber.org/protocol/httpbind' xmlns:xmpp='urn:xmpp:xbosh' />"
+        );
         $xml->addAttribute('content', 'text/xml; charset=utf-8');
         $xml->addAttribute('rid', $this->rid);
         $this->rid += 1;
-        if ($this->sid)
+        if ($this->sid) {
             $xml->addAttribute('sid', $this->sid);
+        }
         #if($this->sid) $xml->addAttribute('xmlns', 'http://jabber.org/protocol/httpbind');
         $xml->addAttribute('xml:lang', 'en', 'xml');
         if ($sub) { // ok, so simplexml is lame
@@ -129,7 +136,7 @@ class BOSH extends XMPP
         }
     }
 
-    public function send($msg, $timeout = NULL)
+    public function send($msg, $timeout = null)
     {
         $this->log->debug("SEND: $msg");
         $msg = new \SimpleXMLElement($msg);

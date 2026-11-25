@@ -9,7 +9,6 @@ use Psr\Log\LoggerInterface;
 
 class XMLStream
 {
-
     /**
      * @var string
      */
@@ -146,8 +145,15 @@ class XMLStream
      * @param string  $logfile
      * @param LoggerInterface|null $logger
      */
-    public function __construct($host = null, $port = null, $printlog = false, $loglevel = null, $is_server = false, $logfile = "", ?LoggerInterface $logger = null)
-    {
+    public function __construct(
+        $host = null,
+        $port = null,
+        $printlog = false,
+        $loglevel = null,
+        $is_server = false,
+        $logfile = "",
+        ?LoggerInterface $logger = null
+    ) {
         $this->reconnect = !$is_server;
         $this->is_server = $is_server;
         $this->host = $host;
@@ -200,13 +206,13 @@ class XMLStream
      *
      * @param string $msg
      */
-    public function send($msg, $timeout = NULL)
+    public function send($msg, $timeout = null)
     {
         $this->log->debug("SEND: $msg");
         if (is_null($timeout)) {
-            $secs = NULL;
-            $usecs = NULL;
-        } else if ($timeout == 0) {
+            $secs = null;
+            $usecs = null;
+        } elseif ($timeout == 0) {
             $secs = 0;
             $usecs = 0;
         } else {
@@ -226,7 +232,7 @@ class XMLStream
             $this->doReconnect();
             # TODO: retry send here
             return false;
-        } else if ($select > 0) {
+        } elseif ($select > 0) {
             $this->log->debug("Socket is ready; send it.");
         } else {
             $this->log->error("Socket is not ready; break.");
@@ -279,11 +285,18 @@ class XMLStream
                 $conflag = STREAM_CLIENT_CONNECT;
             }
             $conntype = 'tcp';
-            if ($this->use_ssl)
+            if ($this->use_ssl) {
                 $conntype = 'ssl';
+            }
             $this->log->notice("Connecting to $conntype://{$this->server}:{$this->port}");
             try {
-                $this->socket = @stream_socket_client("$conntype://{$this->server}:{$this->port}", $errno, $errstr, $timeout, $conflag);
+                $this->socket = @stream_socket_client(
+                    "$conntype://{$this->server}:{$this->port}",
+                    $errno,
+                    $errstr,
+                    $timeout,
+                    $conflag
+                );
             } catch (\Exception $e) {
                 throw new MyException($e->getMessage());
             }
@@ -300,8 +313,9 @@ class XMLStream
             stream_context_set_option($this->socket, 'ssl', 'allow_self_signed', true);
             stream_context_set_option($this->socket, 'ssl', 'verify_peer', false);
             stream_context_set_option($this->socket, 'ssl', 'verify_peer_name', false);
-            if ($sendinit)
+            if ($sendinit) {
                 $this->send($this->stream_start);
+            }
         } else {
             throw new MyException("Could not connect before timeout.");
         }
@@ -363,15 +377,20 @@ class XMLStream
     public function processUntil($event, $timeout = -1)
     {
         $start = time();
-        if (!is_array($event))
+        if (!is_array($event)) {
             $event = array($event);
+        }
         $this->until[] = $event;
         end($this->until);
         $event_key = key($this->until);
         reset($this->until);
         $this->until_count[$event_key] = 0;
         $updated = '';
-        while (!$this->disconnected and $this->until_count[$event_key] < 1 and (time() - $start < $timeout or $timeout == -1)) {
+        while (
+            !$this->disconnected
+            and $this->until_count[$event_key] < 1
+            and (time() - $start < $timeout or $timeout == -1)
+        ) {
             $this->processOnce();
         }
         if (array_key_exists($event_key, $this->until_payload)) {
@@ -402,9 +421,9 @@ class XMLStream
             $write = array();
             $except = array();
             if (is_null($maximum)) {
-                $secs = NULL;
-                $usecs = NULL;
-            } else if ($maximum == 0) {
+                $secs = null;
+                $usecs = null;
+            } elseif ($maximum == 0) {
                 $secs = 0;
                 $usecs = 0;
             } else {
@@ -418,11 +437,11 @@ class XMLStream
                     $this->doReconnect();
                 } else {
                     fclose($this->socket);
-                    $this->socket = NULL;
+                    $this->socket = null;
                     $this->disconnected = true;
                     return false;
                 }
-            } else if ($updated > 0) {
+            } elseif ($updated > 0) {
                 # XXX: Is this big enough?
                 $buff = @fread($this->socket, 4096);
                 if (!$buff) {
@@ -430,7 +449,7 @@ class XMLStream
                         $this->doReconnect();
                     } else {
                         fclose($this->socket);
-                        $this->socket = NULL;
+                        $this->socket = null;
                         $this->disconnected = true;
                         return false;
                     }
@@ -565,7 +584,7 @@ class XMLStream
      */
     public function process()
     {
-        $this->processOnce(NULL);
+        $this->processOnce(null);
     }
 
     /**
@@ -574,10 +593,10 @@ class XMLStream
      * @param integer $timeout
      * @return string
      */
-    public function processTime($timeout = NULL)
+    public function processTime($timeout = null)
     {
         if (is_null($timeout)) {
-            return $this->processOnce(NULL);
+            return $this->processOnce(null);
         } else {
             return $this->processOnce($timeout * 1000000);
         }
@@ -610,8 +629,9 @@ class XMLStream
             $this->current_ns[$this->xml_depth] = $attr['XMLNS'];
         } else {
             $this->current_ns[$this->xml_depth] = $this->current_ns[$this->xml_depth - 1];
-            if (!$this->current_ns[$this->xml_depth])
+            if (!$this->current_ns[$this->xml_depth]) {
                 $this->current_ns[$this->xml_depth] = $this->default_ns;
+            }
         }
         $ns = $this->current_ns[$this->xml_depth];
         foreach ($attr as $key => $value) {
@@ -628,7 +648,9 @@ class XMLStream
         }
         $obj = new XMLObj($name, $ns, $attr);
         if ($this->xml_depth > 1) {
-            if(!isset($this->xmlobj[$this->xml_depth - 1])) $this->xmlobj[$this->xml_depth - 1] = new \stdClass();
+            if (!isset($this->xmlobj[$this->xml_depth - 1])) {
+                $this->xmlobj[$this->xml_depth - 1] = new \stdClass();
+            }
             $this->xmlobj[$this->xml_depth - 1]->subs[] = $obj;
         }
         $this->xmlobj[$this->xml_depth] = $obj;
@@ -658,7 +680,10 @@ class XMLStream
                 if (is_array($this->xmlobj) && array_key_exists(2, $this->xmlobj)) {
                     $searchxml = $this->xmlobj[2];
                     $nstag = array_shift($handler[0]);
-                    if (($nstag[0] == null or $searchxml->ns == $nstag[0]) and ($nstag[1] == "*" or $nstag[1] == $searchxml->name)) {
+                    if (
+                        ($nstag[0] == null or $searchxml->ns == $nstag[0])
+                        and ($nstag[1] == "*" or $nstag[1] == $searchxml->name)
+                    ) {
                         foreach ($handler[0] as $nstag) {
                             if ($searchxml !== null and $searchxml->hasSub($nstag[1], $ns = $nstag[0])) {
                                 $searchxml = $searchxml->sub($nstag[1], $ns = $nstag[0]);
@@ -668,8 +693,9 @@ class XMLStream
                             }
                         }
                         if ($searchxml !== null) {
-                            if ($handler[2] === null)
+                            if ($handler[2] === null) {
                                 $handler[2] = $this;
+                            }
                             $this->log->info("Calling {$handler[1]}");
                             $handler[2]->{$handler[1]}($this->xmlobj[2]);
                         }
@@ -679,20 +705,29 @@ class XMLStream
             foreach ($this->nshandlers as $handler) {
                 if ($handler[4] != 1 and array_key_exists(2, $this->xmlobj) and $this->xmlobj[2]->hasSub($handler[0])) {
                     $searchxml = $this->xmlobj[2]->sub($handler[0]);
-                } else if (is_array($this->xmlobj) and array_key_exists(2, $this->xmlobj)) {
+                } elseif (is_array($this->xmlobj) and array_key_exists(2, $this->xmlobj)) {
                     $searchxml = $this->xmlobj[2];
                 }
-                if ($searchxml !== null and $searchxml->name == $handler[0] and ($searchxml->ns == $handler[1] or (!$handler[1] and $searchxml->ns == $this->default_ns))) {
-                    if ($handler[3] === null)
+                if (
+                    $searchxml !== null
+                    and $searchxml->name == $handler[0]
+                    and (
+                        $searchxml->ns == $handler[1]
+                        or (!$handler[1] and $searchxml->ns == $this->default_ns)
+                    )
+                ) {
+                    if ($handler[3] === null) {
                         $handler[3] = $this;
+                    }
                     $this->log->info("Calling {$handler[2]}");
                     $handler[3]->{$handler[2]}($this->xmlobj[2]);
                 }
             }
             foreach ($this->idhandlers as $id => $handler) {
                 if (array_key_exists('id', $this->xmlobj[2]->attrs) and $this->xmlobj[2]->attrs['id'] == $id) {
-                    if ($handler[1] === null)
+                    if ($handler[1] === null) {
                         $handler[1] = $this;
+                    }
                     $handler[1]->{$handler[0]}($this->xmlobj[2]);
                     #id handlers are only used once
                     unset($this->idhandlers[$id]);
@@ -769,5 +804,4 @@ class XMLStream
         $updated = @stream_select($read, $write, $except, 0);
         return (($updated !== false) && ($updated > 0));
     }
-
 }
