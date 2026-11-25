@@ -444,6 +444,8 @@ class XMLStream
             unset($this->until[$event_key]);
         } else {
             $payload = array();
+            unset($this->until_count[$event_key]);
+            unset($this->until[$event_key]);
         }
         return $payload;
     }
@@ -564,6 +566,16 @@ class XMLStream
     public function addIdHandler($id, $pointer, $obj = null)
     {
         $this->idhandlers[$id] = array($pointer, $obj);
+    }
+
+    /**
+     * Remove an ID handler
+     *
+     * @param integer $id
+     */
+    public function removeIdHandler($id)
+    {
+        unset($this->idhandlers[$id]);
     }
 
     /**

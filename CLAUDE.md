@@ -12,6 +12,7 @@ Easy-XMPP is a PHP XMPP client library (based on xmpphp), published as `mark-fis
 composer install          # Install dependencies
 composer cs               # PSR-12 check (phpcs)
 php tests/E2E.php         # End-to-end test against a real XMPP server (env overridable)
+php tests/MucE2E.php      # XEP-0045 MUC end-to-end test (env overridable)
 php tests/Client.php      # Interactive manual test client (requires a real XMPP server)
 ```
 
@@ -28,6 +29,7 @@ EasyXmpp\Util\XMLObj          # Parsed XML element tree (name, ns, attrs, subs, 
 EasyXmpp\Util\Log             # Default PSR-3 logger, writes via error_log when enabled
 EasyXmpp\Support\Config       # ArrayAccess with dot-notation get()
 EasyXmpp\XEP\Roster           # Contact list and presence tracking
+EasyXmpp\XEP\MUC              # XEP-0045 MUC rooms (standard presence/message/IQ only)
 EasyXmpp\Exceptions\Exception  # Base exception
 EasyXmpp\Exceptions\MyException # Extended exception for connection errors
 ```
