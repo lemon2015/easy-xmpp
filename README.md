@@ -27,6 +27,7 @@ $config = [
         "loglevel"=>Log::DEBUG, // debug level [optional]
         "timeout"=>30,      // connect timeout (s) [optional]
         "persistent"=>true,  // connect persist [optional]
+        "reconnect"=>false, // 断线自动重连，默认 false，建议交给外部守护进程 [optional]
         "logfile"=>"/tmp/xmpp.log", // [optional]
         // "logger"=>$psrLogger, // 任意 Psr\Log\LoggerInterface 实现 [optional]
 ];

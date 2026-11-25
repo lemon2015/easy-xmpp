@@ -112,7 +112,7 @@ class XMLStream
     /**
      * @var boolean
      */
-    protected $reconnect = true;
+    protected $reconnect = false;
     /**
      * @var boolean
      */
@@ -154,7 +154,6 @@ class XMLStream
         $logfile = "",
         ?LoggerInterface $logger = null
     ) {
-        $this->reconnect = !$is_server;
         $this->is_server = $is_server;
         $this->host = $host;
         $this->port = $port;
@@ -228,9 +227,14 @@ class XMLStream
         $select = @stream_select($read, $write, $except, $secs, $usecs);
 
         if ($select === false) {
-            $this->log->notice("ERROR sending message; reconnecting.");
-            $this->doReconnect();
-            # TODO: retry send here
+            if ($this->reconnect) {
+                $this->log->notice("ERROR sending message; reconnecting.");
+                $this->doReconnect();
+                # TODO: retry send here
+            } else {
+                $this->log->error("ERROR sending message; connection dropped.");
+                $this->dropConnection();
+            }
             return false;
         } elseif ($select > 0) {
             $this->log->debug("Socket is ready; send it.");
@@ -242,8 +246,13 @@ class XMLStream
         $sentbytes = @fwrite($this->socket, $msg);
         $this->log->debug("SENT: " . mb_substr($msg, 0, $sentbytes, '8bit'));
         if ($sentbytes === false) {
-            $this->log->error("ERROR sending message; reconnecting.");
-            $this->doReconnect();
+            if ($this->reconnect) {
+                $this->log->error("ERROR sending message; reconnecting.");
+                $this->doReconnect();
+            } else {
+                $this->log->error("ERROR sending message; connection dropped.");
+                $this->dropConnection();
+            }
             return false;
         }
         //add fflush method to prevent msg blocked in socket buffer ，causing delay, especially in long run env
@@ -263,6 +272,18 @@ class XMLStream
             $this->reset();
             $this->event('reconnect');
         }
+    }
+
+    /**
+     * 关闭底层连接并标记为断开，不触发自动重连
+     */
+    protected function dropConnection()
+    {
+        if (is_resource($this->socket)) {
+            @fclose($this->socket);
+        }
+        $this->socket = null;
+        $this->disconnected = true;
     }
 
     /**
@@ -436,9 +457,7 @@ class XMLStream
                 if ($this->reconnect) {
                     $this->doReconnect();
                 } else {
-                    fclose($this->socket);
-                    $this->socket = null;
-                    $this->disconnected = true;
+                    $this->dropConnection();
                     return false;
                 }
             } elseif ($updated > 0) {
@@ -448,9 +467,7 @@ class XMLStream
                     if ($this->reconnect) {
                         $this->doReconnect();
                     } else {
-                        fclose($this->socket);
-                        $this->socket = null;
-                        $this->disconnected = true;
+                        $this->dropConnection();
                         return false;
                     }
                 }
@@ -749,7 +766,7 @@ class XMLStream
                 }
                 $this->disconnected = true;
                 $this->sent_disconnect = true;
-                fclose($this->socket);
+                $this->dropConnection();
                 if ($this->reconnect) {
                     $this->doReconnect();
                 }
@@ -782,7 +799,7 @@ class XMLStream
             if ($this->reconnect) {
                 $this->doReconnect();
             } else {
-                fclose($this->socket);
+                $this->dropConnection();
                 return false;
             }
         }
