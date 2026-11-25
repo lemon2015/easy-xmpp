@@ -403,7 +403,7 @@ class XMLStream
      *
      * @param string|array $event
      * @param integer $timeout
-     * @return string
+     * @return array
      */
     public function processUntil($event, $timeout = -1)
     {

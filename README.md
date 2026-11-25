@@ -131,6 +131,14 @@ composer cs      # 检查 PSR-12
 composer cs:fix  # 自动修复
 ```
 
+## 测试
+
+```shell
+php tests/E2E.php   # 或 composer e2e
+```
+
+默认连接 `example.com:7222`，账号密码随意。可用环境变量覆盖：`XMPP_HOST`、`XMPP_PORT`、`XMPP_USER`、`XMPP_PASSWORD`、`XMPP_RESOURCE`、`XMPP_SERVER`、`XMPP_TLS=0`、`XMPP_TIMEOUT`、`XMPP_LOG`。
+
 ## License
 
 MIT
