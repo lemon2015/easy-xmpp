@@ -160,6 +160,11 @@ $muc->join('room1', 'nick');
 $muc->sendGroupMessage('room1', 'hello');
 $muc->sendPrivateMessage('room1', 'other-nick', 'hi');
 
+// 邀请 / 拒绝邀请 / 设置主题（XEP-0045 标准）
+$muc->invite('room1', 'user@example.com', 'join us');
+$muc->declineInvite('room1', 'inviter@example.com', 'not now');
+$muc->setTopic('room1', 'today topic');
+
 // 房间事件（join 后服务端会持续推送）
 $conn->addEventHandler('muc_message', 'onMucMessage', $handler);
 $conn->addEventHandler('muc_occupant_joined', 'onOccupantJoined', $handler);
@@ -169,7 +174,9 @@ $conn->addEventHandler('muc_occupant_left', 'onOccupantLeft', $handler);
 $muc->leave('room1', 'nick');
 ```
 
-事件：`muc_joined`、`muc_left`、`muc_message`、`muc_private_message`、`muc_occupant_joined`、`muc_occupant_presence`、`muc_occupant_left`、`muc_subject`、`muc_invite`、`muc_error`。
+事件：`muc_joined`、`muc_left`、`muc_message`、`muc_private_message`、`muc_occupant_joined`、`muc_occupant_presence`、`muc_occupant_left`、`muc_subject`、`muc_invite`、`muc_invite_declined`、`muc_removed`、`muc_error`。
+
+成员事件会附带 `affiliation`、`role`、`jid`、`newnick`（服务端可见时）。只实现 XEP-0045 的 mediated invitation；direct invitation（XEP-0249）和 `muc#admin` 踢人/封禁不在本包范围内。
 
 标准 MUC 没有单独的“订阅房间”报文：join 后保持在房间内，服务端就会推送房间 presence 和 groupchat 消息。
 

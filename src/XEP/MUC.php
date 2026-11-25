@@ -176,6 +176,64 @@ class MUC
         );
     }
 
+    /**
+     * 发送房间邀请（XEP-0045 mediated invitation）。
+     */
+    public function invite($room, $receiver, $reason = null)
+    {
+        $roomJid = $this->roomJid($room);
+        $receiver = trim((string)$receiver);
+        if ($receiver === '') {
+            throw new \InvalidArgumentException('MUC invitee is required');
+        }
+
+        $invite = "<invite to='" . $this->xmlAttr($receiver) . "'>";
+        if ($reason !== null && $reason !== '') {
+            $invite .= '<reason>' . htmlspecialchars((string)$reason) . '</reason>';
+        }
+        $invite .= '</invite>';
+
+        return $this->conn->send(
+            "<message to='" . $this->xmlAttr($roomJid) . "'><x xmlns='" . self::NS_MUC_USER . "'>"
+            . $invite . '</x></message>'
+        );
+    }
+
+    /**
+     * 拒绝房间邀请（XEP-0045 decline，发送给房间由服务端转发给邀请人）。
+     */
+    public function declineInvite($room, $inviter, $reason = null)
+    {
+        $roomJid = $this->roomJid($room);
+        $inviter = trim((string)$inviter);
+        if ($inviter === '') {
+            throw new \InvalidArgumentException('MUC inviter is required');
+        }
+
+        $decline = "<decline to='" . $this->xmlAttr($inviter) . "'>";
+        if ($reason !== null && $reason !== '') {
+            $decline .= '<reason>' . htmlspecialchars((string)$reason) . '</reason>';
+        }
+        $decline .= '</decline>';
+
+        return $this->conn->send(
+            "<message to='" . $this->xmlAttr($roomJid) . "'><x xmlns='" . self::NS_MUC_USER . "'>"
+            . $decline . '</x></message>'
+        );
+    }
+
+    /**
+     * 设置房间主题（groupchat subject）。
+     */
+    public function setTopic($room, $topic)
+    {
+        $roomJid = $this->roomJid($room);
+        return $this->conn->send(
+            "<message to='" . $this->xmlAttr($roomJid) . "' type='groupchat'><subject>"
+            . htmlspecialchars((string)$topic) . '</subject></message>'
+        );
+    }
+
     public function isJoined($room)
     {
         $roomJid = $this->roomJid($room);
@@ -223,6 +281,7 @@ class MUC
         $event['room'] = $roomJid;
         $event['nick'] = $nick;
         $event['codes'] = $codes;
+        $event = array_merge($event, $this->mucItem($x));
 
         $type = $payload['type'] ?? 'available';
         if ($type === 'error') {
@@ -262,13 +321,27 @@ class MUC
         $event['nick'] = $nick;
 
         $x = $xml->sub('x', null, self::NS_MUC_USER);
-        if ($x && $x->sub('invite')) {
+        if ($x) {
             $invite = $x->sub('invite');
-            $reason = $invite->sub('reason');
-            $event['invitee'] = $invite->attrs['to'] ?? '';
-            $event['reason'] = $reason ? $reason->data : '';
-            $this->conn->event('muc_invite', $event);
-            return;
+            if ($invite) {
+                $reason = $invite->sub('reason');
+                $password = $x->sub('password');
+                $event['inviter'] = $invite->attrs['from'] ?? '';
+                $event['invitee'] = $invite->attrs['to'] ?? '';
+                $event['reason'] = $reason ? $reason->data : '';
+                $event['password'] = $password ? $password->data : '';
+                $this->conn->event('muc_invite', $event);
+                return;
+            }
+
+            $decline = $x->sub('decline');
+            if ($decline) {
+                $reason = $decline->sub('reason');
+                $event['invitee'] = $decline->attrs['from'] ?? '';
+                $event['reason'] = $reason ? $reason->data : '';
+                $this->conn->event('muc_invite_declined', $event);
+                return;
+            }
         }
 
         $subject = $xml->sub('subject');
@@ -327,14 +400,21 @@ class MUC
         if (isset($this->rooms[$roomJid]['occupants'][$nick])) {
             unset($this->rooms[$roomJid]['occupants'][$nick]);
         }
-        if (in_array('110', $codes, true)) {
-            if (isset($this->rooms[$roomJid])) {
-                $this->rooms[$roomJid]['joined'] = false;
-            }
-            $this->conn->event('muc_left', $event);
+
+        $self = in_array('110', $codes, true);
+        if ($self && isset($this->rooms[$roomJid])) {
+            $this->rooms[$roomJid]['joined'] = false;
+        }
+
+        $removed = in_array('301', $codes, true)
+            || in_array('307', $codes, true)
+            || in_array('321', $codes, true);
+        if ($self && $removed) {
+            $this->conn->event('muc_removed', $event);
             return;
         }
-        $this->conn->event('muc_occupant_left', $event);
+
+        $this->conn->event($self ? 'muc_left' : 'muc_occupant_left', $event);
     }
 
     protected function handleAvailablePresence($event, $roomJid, $nick, array $codes)
@@ -377,6 +457,20 @@ class MUC
             }
         }
         return $codes;
+    }
+
+    protected function mucItem(XMLObj $x)
+    {
+        $item = $x->sub('item');
+        if (!$item) {
+            return array();
+        }
+        return array(
+            'affiliation' => $item->attrs['affiliation'] ?? null,
+            'role' => $item->attrs['role'] ?? null,
+            'jid' => $item->attrs['jid'] ?? null,
+            'newnick' => $item->attrs['nick'] ?? null,
+        );
     }
 
     protected function isMucRoom($roomJid)
