@@ -27,7 +27,8 @@ $config = [
         "loglevel"=>Log::DEBUG, // debug level [optional]
         "timeout"=>30,      // connect timeout (s) [optional]
         "persistent"=>true,  // connect persist [optional]
-        "logfile"=>"/tmp/xmpp.log" // [optional]
+        "logfile"=>"/tmp/xmpp.log", // [optional]
+        // "logger"=>$psrLogger, // 任意 Psr\Log\LoggerInterface 实现 [optional]
 ];
 
 $conn = new XMPP($config);
@@ -107,6 +108,19 @@ try {
 }
 ```
 
+
+## 日志
+
+默认使用内置 `EasyXmpp\Util\Log`：`printlog=true` 时通过 `error_log` 写入 `logfile`。
+
+需要接入框架日志时，传入任意实现了 `Psr\Log\LoggerInterface` 的 logger（Laravel、Symfony、Monolog 等）即可，此时 `printlog`、`loglevel`、`logfile` 不再生效：
+
+```php
+$config['logger'] = $psrLogger;
+$conn = new XMPP($config);
+```
+
+非 PSR-3 的框架日志类，先包一层 PSR-3 适配器再传入。
 
 ## License
 
