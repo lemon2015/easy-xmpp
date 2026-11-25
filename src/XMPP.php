@@ -566,6 +566,64 @@ class XMPP extends XMLStream
     }
 
     /**
+     * Send an IQ request and wait for the matching response.
+     *
+     * @param string $to
+     * @param string $type get|set
+     * @param string $payload XML fragment inside <iq>
+     * @param int $timeout seconds
+     * @return \EasyXmpp\Util\XMLObj
+     */
+    public function requestIq($to, $type, $payload, $timeout = 10)
+    {
+        if ($type !== 'get' && $type !== 'set') {
+            throw new \InvalidArgumentException('IQ type must be "get" or "set"');
+        }
+        $to = trim((string)$to);
+        if ($to === '') {
+            throw new \InvalidArgumentException('IQ target is required');
+        }
+
+        $id = 'iq_' . uniqid('', true);
+        $this->addIdHandler($id, 'handleIqResponse', $this);
+        $this->send(
+            "<iq type='$type' id='" . $this->xmlAttr($id) . "' to='" . $this->xmlAttr($to) . "'>"
+            . $payload . '</iq>'
+        );
+
+        $events = $this->processUntil('iq_response_' . $id, (int)$timeout);
+        $this->removeIdHandler($id);
+
+        if (!$events) {
+            throw new Exception('IQ timeout: ' . $to);
+        }
+        $response = $events[0][1];
+        if (($response->attrs['type'] ?? '') === 'error') {
+            $error = $response->sub('error');
+            throw new Exception(
+                'IQ error (' . $to . '): ' . ($error ? $error->toString() : 'unknown error')
+            );
+        }
+        return $response;
+    }
+
+    /**
+     * IQ response callback (registered by requestIq).
+     *
+     * @param \EasyXmpp\Util\XMLObj $xml
+     */
+    public function handleIqResponse($xml)
+    {
+        $id = $xml->attrs['id'] ?? '';
+        $this->event('iq_response_' . $id, $xml);
+    }
+
+    protected function xmlAttr($value)
+    {
+        return htmlspecialchars((string)$value, ENT_QUOTES | ENT_XML1, 'UTF-8');
+    }
+
+    /**
      * Send a XMPP Ping to the server
      */
     public function ping($id = null)

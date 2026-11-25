@@ -180,6 +180,42 @@ $muc->leave('room1', 'nick');
 
 标准 MUC 没有单独的“订阅房间”报文：join 后保持在房间内，服务端就会推送房间 presence 和 groupchat 消息。
 
+## PubSub（XEP-0060）
+
+只使用标准 IQ 和 message 事件通知，不依赖服务端管理接口。PEP（XEP-0163）把 service 设为用户 bare JID 即可。
+
+```php
+use EasyXmpp\XEP\PubSub;
+
+$ps = new PubSub($conn, 'pubsub.example.com');
+
+// 创建节点（可选配置）
+$node = $ps->createNode('urn:example:news', [
+    'pubsub#access_model' => 'open',
+    'pubsub#persist_items' => true,
+]);
+
+// 发布 / 读取 / 撤回（payload 为合法 XML 片段）
+$ps->publish($node, 'item1', '<news xmlns="urn:example:news">hello</news>');
+$items = $ps->getItems($node);
+$ps->retract($node, 'item1');
+
+// 订阅 / 退订
+$sub = $ps->subscribe($node);
+$ps->unsubscribe($node, $sub['jid'] ?? null, $sub['subid'] ?? null);
+
+// 节点管理
+$ps->getSubscriptions($node);
+$ps->getAffiliations($node);
+$ps->getNodeConfig($node);
+$ps->setNodeConfig($node, ['pubsub#max_items' => 20]);
+$ps->deleteNode($node);
+```
+
+事件：`pubsub_items`、`pubsub_item`、`pubsub_retract`、`pubsub_purge`、`pubsub_config`、`pubsub_subscription`、`pubsub_affiliations`。
+
+`getItems()` / 事件中的 item 结构：`id`、`publisher`、`payload`（第一个子元素 XMLObj，可能为 null）、`xml`（item 节点）。
+
 ## License
 
 MIT

@@ -134,7 +134,17 @@ class MUC
         $payload = "<query xmlns='" . self::NS_MUC_OWNER . "'>"
             . "<x xmlns='" . self::NS_X_DATA . "' type='submit'>" . $fields . '</x>'
             . '</query>';
-        return $this->requestIq($roomJid, 'set', $payload, $timeout);
+        $timeout = $this->normalizeTimeout($timeout);
+        try {
+            return $this->conn->requestIq($roomJid, 'set', $payload, $timeout);
+        } catch (\Throwable $e) {
+            $this->conn->event('muc_error', array(
+                'room' => $roomJid,
+                'type' => 'iq_error',
+                'message' => $e->getMessage(),
+            ));
+            throw $e;
+        }
     }
 
     /**
@@ -361,38 +371,6 @@ class MUC
         } elseif ($type === 'error') {
             $this->conn->event('muc_error', $event);
         }
-    }
-
-    /**
-     * IQ 响应回调（由 addIdHandler 调用）。
-     *
-     * @param XMLObj $xml
-     */
-    public function handleIqResponse($xml)
-    {
-        $id = $xml->attrs['id'] ?? '';
-        $this->conn->event('muc_iq_' . $id, $xml);
-    }
-
-    protected function requestIq($to, $type, $payload, $timeout = null)
-    {
-        $timeout = $this->normalizeTimeout($timeout);
-        $id = 'muc_' . uniqid('', true);
-        $this->conn->addIdHandler($id, 'handleIqResponse', $this);
-        $this->conn->send("<iq type='$type' id='$id' to='" . $this->xmlAttr($to) . "'>$payload</iq>");
-        $events = $this->conn->processUntil('muc_iq_' . $id, $timeout);
-        $this->conn->removeIdHandler($id);
-
-        if (!$events) {
-            throw new Exception('MUC IQ timeout: ' . $to);
-        }
-        $response = $events[0][1];
-        if (($response->attrs['type'] ?? '') === 'error') {
-            $error = array('room' => $to, 'type' => 'iq_error', 'xml' => $response);
-            $this->conn->event('muc_error', $error);
-            throw new Exception('MUC IQ error (' . $to . '): ' . $this->describeError($error));
-        }
-        return $response;
     }
 
     protected function handleUnavailablePresence($event, $roomJid, $nick, array $codes)

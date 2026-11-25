@@ -13,6 +13,7 @@ composer install          # Install dependencies
 composer cs               # PSR-12 check (phpcs)
 php tests/E2E.php         # End-to-end test against a real XMPP server (env overridable)
 php tests/MucE2E.php      # XEP-0045 MUC end-to-end test (env overridable)
+php tests/PubSubE2E.php   # XEP-0060 PubSub end-to-end test (env overridable)
 php tests/Client.php      # Interactive manual test client (requires a real XMPP server)
 ```
 
@@ -30,6 +31,7 @@ EasyXmpp\Util\Log             # Default PSR-3 logger, writes via error_log when 
 EasyXmpp\Support\Config       # ArrayAccess with dot-notation get()
 EasyXmpp\XEP\Roster           # Contact list and presence tracking
 EasyXmpp\XEP\MUC              # XEP-0045 MUC rooms (standard presence/message/IQ only)
+EasyXmpp\XEP\PubSub            # XEP-0060 PubSub nodes/items/subscriptions (standard IQ/message)
 EasyXmpp\Exceptions\Exception  # Base exception
 EasyXmpp\Exceptions\MyException # Extended exception for connection errors
 ```
@@ -75,4 +77,5 @@ BOSH (`BOSH`): HTTP POST to `/bosh` endpoint with session management via `$_SESS
 - When reconnect is enabled, `doReconnect()` is rate-limited to at most one attempt per second to avoid reconnect storms.
 - `processUntil()` waits using the remaining timeout and `processOnce(..., true)` returns as soon as data arrives, so idle waits do not busy-poll.
 - Logging uses `Psr\Log\LoggerInterface`; pass any PSR-3 logger via the `logger` config key, otherwise the built-in `Log` is used.
+- XEP modules use `XMPP::requestIq()` for synchronous IQ request/response; it matches responses by id and throws on timeout/error.
 - The only external dependency is `psr/log`; BOSH additionally needs `ext-curl`/`ext-simplexml`/`ext-dom`.
