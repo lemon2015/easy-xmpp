@@ -131,7 +131,7 @@ try {
     if (!in_array('http://jabber.org/protocol/pubsub#subscribe', $features, true)) {
         throw new RuntimeException('service does not advertise pubsub#subscribe');
     }
-    echo "[1/8] discover ok, features=" . count($features) . "\n";
+    echo "[discover] ok, features=" . count($features) . "\n";
 
     $created = $ps->createNode($node, [
         'pubsub#access_model' => 'open',
@@ -141,7 +141,22 @@ try {
     if ($created !== $node) {
         throw new RuntimeException('unexpected created node: ' . var_export($created, true));
     }
-    echo "[2/8] node created\n";
+    echo "[create] node created\n";
+
+    $nodes = $ps->listNodes();
+    $listed = false;
+    foreach ($nodes as $entry) {
+        if (($entry['node'] ?? null) === $node
+            || strpos((string)($entry['jid'] ?? ''), $node) === 0
+        ) {
+            $listed = true;
+            break;
+        }
+    }
+    if (!$listed) {
+        throw new RuntimeException('node not found in listNodes result');
+    }
+    echo "[list] node listed\n";
 
     $itemId = $ps->publish($node, 'item1', '<test xmlns="urn:easyxmpp:test">hello</test>');
     if ($itemId !== 'item1') {
@@ -155,13 +170,41 @@ try {
     if (!$payload || $payload->name !== 'test' || $payload->data !== 'hello') {
         throw new RuntimeException('item1 payload mismatch');
     }
-    echo "[3/8] publish/getItems ok\n";
+    echo "[publish] publish/getItems ok\n";
 
     $subscription = $ps->subscribe($node, $userJid);
     if (($subscription['subscription'] ?? '') !== 'subscribed') {
         throw new RuntimeException('subscription not active: ' . var_export($subscription, true));
     }
-    echo "[4/8] subscribe ok, subid=" . ($subscription['subid'] ?? '-') . "\n";
+    echo "[subscribe] ok, subid=" . ($subscription['subid'] ?? '-') . "\n";
+
+    $ownerSubs = $ps->getOwnerSubscriptions($node);
+    $ownerSubFound = false;
+    foreach ($ownerSubs as $entry) {
+        if (($entry['jid'] ?? null) === $userJid) {
+            $ownerSubFound = true;
+            break;
+        }
+    }
+    if (!$ownerSubFound) {
+        throw new RuntimeException('owner subscriptions missing subscriber');
+    }
+
+    $ownerAffs = $ps->getOwnerAffiliations($node);
+    $ownerAffFound = false;
+    foreach ($ownerAffs as $entry) {
+        if (($entry['jid'] ?? null) === $userJid && ($entry['affiliation'] ?? null) === 'owner') {
+            $ownerAffFound = true;
+            break;
+        }
+    }
+    if (!$ownerAffFound) {
+        throw new RuntimeException('owner affiliations missing owner');
+    }
+
+    $ps->modifySubscriptions($node, [['jid' => $userJid, 'subscription' => 'subscribed']]);
+    $ps->modifyAffiliations($node, [['jid' => $userJid, 'affiliation' => 'owner']]);
+    echo "[owner] subscriptions/affiliations ok\n";
 
     $ps->publish($node, 'item2', '<test xmlns="urn:easyxmpp:test">two</test>');
     $deadline = microtime(true) + 5;
@@ -171,7 +214,7 @@ try {
     if (!hasItem($collector->items, 'item2')) {
         throw new RuntimeException('pubsub_item event for item2 not received');
     }
-    echo "[5/8] event notification received\n";
+    echo "[event] notification received\n";
 
     $subscriptions = $ps->getSubscriptions($node);
     $found = false;
@@ -183,17 +226,17 @@ try {
     if (!$found) {
         throw new RuntimeException('subscription list does not contain node');
     }
-    echo "[6/8] getSubscriptions ok\n";
+    echo "[subscriptions] list ok\n";
 
     $ps->retract($node, 'item2');
     if (hasItem($ps->getItems($node), 'item2')) {
         throw new RuntimeException('item2 still present after retract');
     }
-    echo "[7/8] retract ok\n";
+    echo "[retract] ok\n";
 
     $ps->unsubscribe($node, $subscription['jid'] ?? $userJid, $subscription['subid'] ?? null);
     $ps->deleteNode($node);
-    echo "[8/8] unsubscribe/delete node ok\n";
+    echo "[cleanup] unsubscribe/delete node ok\n";
 
     $conn->disconnect();
     echo "PUBSUB E2E OK\n";

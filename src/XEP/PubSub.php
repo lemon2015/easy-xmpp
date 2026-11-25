@@ -18,6 +18,7 @@ class PubSub
     public const NS_PUBSUB_OWNER = 'http://jabber.org/protocol/pubsub#owner';
     public const NS_X_DATA = 'jabber:x:data';
     public const NS_DISCO_INFO = 'http://jabber.org/protocol/disco#info';
+    public const NS_DISCO_ITEMS = 'http://jabber.org/protocol/disco#items';
 
     /**
      * @var XMPP
@@ -76,6 +77,46 @@ class PubSub
             }
         }
         return $features;
+    }
+
+    /**
+     * 列出服务上的节点（disco#items）。
+     *
+     * @return array[] 每项包含 jid/name/node
+     */
+    public function listNodes($service = null)
+    {
+        $target = $service === null ? $this->service : $service;
+        if (!is_string($target) || trim($target) === '') {
+            throw new \InvalidArgumentException('PubSub discovery target is required');
+        }
+        $result = $this->conn->requestIq(
+            $target,
+            'get',
+            "<query xmlns='" . self::NS_DISCO_ITEMS . "'/>",
+            $this->timeout
+        );
+
+        $nodes = array();
+        $query = $result->sub('query');
+        if ($query && is_array($query->subs)) {
+            foreach ($query->subs as $item) {
+                if ($item->name !== 'item') {
+                    continue;
+                }
+                $jid = $item->attrs['jid'] ?? null;
+                $node = $item->attrs['node'] ?? $item->attrs['name'] ?? null;
+                if ($node === null && $jid !== null && strpos($jid, '@') !== false) {
+                    $node = substr($jid, 0, strpos($jid, '@'));
+                }
+                $nodes[] = array(
+                    'jid' => $jid,
+                    'name' => $item->attrs['name'] ?? null,
+                    'node' => $node,
+                );
+            }
+        }
+        return $nodes;
     }
 
     /**
@@ -282,6 +323,80 @@ class PubSub
             . "<configure node='" . $this->xmlAttr($node) . "'/></pubsub>",
             $this->timeout
         );
+    }
+
+    /**
+     * owner 视角：节点上的所有订阅。
+     */
+    public function getOwnerSubscriptions($node)
+    {
+        $node = $this->requireNode($node);
+        $result = $this->conn->requestIq(
+            $this->service,
+            'get',
+            "<pubsub xmlns='" . self::NS_PUBSUB_OWNER . "'>"
+            . "<subscriptions node='" . $this->xmlAttr($node) . "'/></pubsub>",
+            $this->timeout
+        );
+        return $this->withNode($this->parseListAttributes($result, 'subscriptions', 'subscription'), $node);
+    }
+
+    /**
+     * owner 视角：修改订阅状态，例如 subscribed / none。
+     *
+     * @param array[] $subscriptions 每项 ['jid' => ..., 'subscription' => ...]
+     */
+    public function modifySubscriptions($node, array $subscriptions)
+    {
+        $node = $this->requireNode($node);
+        $inner = '';
+        foreach ($subscriptions as $subscription) {
+            if (empty($subscription['jid'])) {
+                throw new \InvalidArgumentException('PubSub subscription jid is required');
+            }
+            $inner .= "<subscription jid='" . $this->xmlAttr($subscription['jid']) . "'"
+                . " subscription='" . $this->xmlAttr($subscription['subscription'] ?? 'none') . "'/>";
+        }
+        $payload = "<pubsub xmlns='" . self::NS_PUBSUB_OWNER . "'>"
+            . "<subscriptions node='" . $this->xmlAttr($node) . "'>" . $inner . '</subscriptions></pubsub>';
+        return $this->conn->requestIq($this->service, 'set', $payload, $this->timeout);
+    }
+
+    /**
+     * owner 视角：节点上的所有 affiliation。
+     */
+    public function getOwnerAffiliations($node)
+    {
+        $node = $this->requireNode($node);
+        $result = $this->conn->requestIq(
+            $this->service,
+            'get',
+            "<pubsub xmlns='" . self::NS_PUBSUB_OWNER . "'>"
+            . "<affiliations node='" . $this->xmlAttr($node) . "'/></pubsub>",
+            $this->timeout
+        );
+        return $this->withNode($this->parseListAttributes($result, 'affiliations', 'affiliation'), $node);
+    }
+
+    /**
+     * owner 视角：修改 affiliation，例如 owner / publisher / member / none / outcast。
+     *
+     * @param array[] $affiliations 每项 ['jid' => ..., 'affiliation' => ...]
+     */
+    public function modifyAffiliations($node, array $affiliations)
+    {
+        $node = $this->requireNode($node);
+        $inner = '';
+        foreach ($affiliations as $affiliation) {
+            if (empty($affiliation['jid']) || empty($affiliation['affiliation'])) {
+                throw new \InvalidArgumentException('PubSub affiliation jid/affiliation is required');
+            }
+            $inner .= "<affiliation jid='" . $this->xmlAttr($affiliation['jid']) . "'"
+                . " affiliation='" . $this->xmlAttr($affiliation['affiliation']) . "'/>";
+        }
+        $payload = "<pubsub xmlns='" . self::NS_PUBSUB_OWNER . "'>"
+            . "<affiliations node='" . $this->xmlAttr($node) . "'>" . $inner . '</affiliations></pubsub>';
+        return $this->conn->requestIq($this->service, 'set', $payload, $this->timeout);
     }
 
     public function setNodeConfig($node, array $config)

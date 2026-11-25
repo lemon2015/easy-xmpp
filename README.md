@@ -205,11 +205,16 @@ $sub = $ps->subscribe($node);
 $ps->unsubscribe($node, $sub['jid'] ?? null, $sub['subid'] ?? null);
 
 // 节点管理
-$ps->getSubscriptions($node);
-$ps->getAffiliations($node);
+$nodes = $ps->listNodes();                    // 节点列表（disco#items）
+$ps->getSubscriptions($node);                 // 当前用户的订阅
+$ps->getOwnerSubscriptions($node);            // owner：节点上的所有订阅
+$ps->modifySubscriptions($node, [['jid' => 'user@example.com', 'subscription' => 'subscribed']]);
+$ps->getOwnerAffiliations($node);             // owner：节点上的所有成员
+$ps->modifyAffiliations($node, [['jid' => 'user@example.com', 'affiliation' => 'member']]);
 $ps->getNodeConfig($node);
 $ps->setNodeConfig($node, ['pubsub#max_items' => 20]);
-$ps->deleteNode($node);
+$ps->purgeNode($node);                        // 清空节点条目
+$ps->deleteNode($node);                       // 删除节点
 ```
 
 事件：`pubsub_items`、`pubsub_item`、`pubsub_retract`、`pubsub_purge`、`pubsub_config`、`pubsub_subscription`、`pubsub_affiliations`。
