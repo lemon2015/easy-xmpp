@@ -133,6 +133,10 @@ class XMLStream
      * @var integer
      */
     protected $reconnectTimeout = 30;
+    /**
+     * @var float 上次重连时间戳，用于限制重连频率
+     */
+    protected $lastReconnectTime = 0;
 
     /**
      * Constructor
@@ -278,6 +282,11 @@ class XMLStream
     {
         if (!$this->is_server) {
             $this->log->warning("Reconnecting ($this->reconnectTimeout)...");
+            $now = microtime(true);
+            if ($now - $this->lastReconnectTime < 1) {
+                sleep(1);
+            }
+            $this->lastReconnectTime = microtime(true);
             $this->connect($this->reconnectTimeout, false, false);
             $this->reset();
             $this->event('reconnect');
@@ -402,12 +411,12 @@ class XMLStream
      * Process until a specified event or a timeout occurs
      *
      * @param string|array $event
-     * @param integer $timeout
+     * @param int|float $timeout
      * @return array
      */
     public function processUntil($event, $timeout = -1)
     {
-        $start = time();
+        $start = microtime(true);
         if (!is_array($event)) {
             $event = array($event);
         }
@@ -416,13 +425,17 @@ class XMLStream
         $event_key = key($this->until);
         reset($this->until);
         $this->until_count[$event_key] = 0;
-        $updated = '';
         while (
             !$this->disconnected
             and $this->until_count[$event_key] < 1
-            and (time() - $start < $timeout or $timeout == -1)
+            and ($timeout == -1 or microtime(true) - $start < $timeout)
         ) {
-            $this->processOnce();
+            $maximum = $timeout == -1
+                ? null
+                : (int)max(0, ($timeout - (microtime(true) - $start)) * 1000000);
+            if (!$this->processOnce($maximum, true)) {
+                break;
+            }
         }
         if (array_key_exists($event_key, $this->until_payload)) {
             $payload = $this->until_payload[$event_key];
@@ -440,8 +453,12 @@ class XMLStream
      * 0 -> only read if data is immediately ready
      * NULL -> wait forever and ever
      * integer -> process for this amount of time
+     *
+     * @param int|null $maximum
+     * @param bool $return_when_received 收到数据后立即返回
+     * @return bool
      */
-    public function processOnce($maximum = 5)
+    public function processOnce($maximum = 5, $return_when_received = false)
     {
         if (!is_resource($this->socket)) {
             $this->dropConnection();
@@ -470,6 +487,9 @@ class XMLStream
                 $this->log->debug("Error on stream_select()");
                 if ($this->reconnect) {
                     $this->doReconnect();
+                    if ($return_when_received) {
+                        return true;
+                    }
                 } else {
                     $this->dropConnection();
                     return false;
@@ -480,13 +500,19 @@ class XMLStream
                 if (!$buff) {
                     if ($this->reconnect) {
                         $this->doReconnect();
-                    } else {
-                        $this->dropConnection();
-                        return false;
+                        if ($return_when_received) {
+                            return true;
+                        }
+                        continue;
                     }
+                    $this->dropConnection();
+                    return false;
                 }
                 $this->log->debug("RECV: $buff");
                 xml_parse($this->parser, $buff, false);
+                if ($return_when_received) {
+                    return true;
+                }
             } else {
                 # $updated == 0 means no changes during timeout.
             }

@@ -108,7 +108,7 @@ class BOSH extends XMPP
         return $output;
     }
 
-    public function processOnce($maximum = 5)
+    public function processOnce($maximum = 5, $return_when_received = false)
     {
         if ($this->http_buffer) {
             $this->parseBuffer();

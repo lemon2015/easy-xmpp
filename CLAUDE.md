@@ -70,5 +70,7 @@ BOSH (`BOSH`): HTTP POST to `/bosh` endpoint with session management via `$_SESS
 - `$authed` flag controls whether `featuresHandler` proceeds to bind or auth.
 - `stream_socket_client` is used for TCP; `curl` for BOSH HTTP transport.
 - Automatic reconnect is **off by default** (`reconnect` config, default `false`); long-running processes are expected to be supervised externally. When disabled, connection failures call `dropConnection()` and set `disconnected = true`.
+- When reconnect is enabled, `doReconnect()` is rate-limited to at most one attempt per second to avoid reconnect storms.
+- `processUntil()` waits using the remaining timeout and `processOnce(..., true)` returns as soon as data arrives, so idle waits do not busy-poll.
 - Logging uses `Psr\Log\LoggerInterface`; pass any PSR-3 logger via the `logger` config key, otherwise the built-in `Log` is used.
 - The only external dependency is `psr/log`; BOSH additionally needs `ext-curl`/`ext-simplexml`/`ext-dom`.

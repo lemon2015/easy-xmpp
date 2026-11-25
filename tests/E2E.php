@@ -15,7 +15,7 @@
  *   XMPP_RESOURCE  默认 e2e-<pid>
  *   XMPP_SERVER    默认空（使用 host）
  *   XMPP_TLS       默认 1，设为 0 关闭 STARTTLS
- *   XMPP_TIMEOUT   默认 10 秒
+ *   XMPP_TIMEOUT   默认 30 秒
  *   XMPP_LOG       默认 <tmp>/easy-xmpp-e2e.log
  */
 
@@ -97,7 +97,7 @@ $password = envValue('XMPP_PASSWORD', 'test');
 $resource = envValue('XMPP_RESOURCE', 'e2e-' . getmypid());
 $server = envValue('XMPP_SERVER', '');
 $tls = envValue('XMPP_TLS', '1') !== '0';
-$timeout = (int)envValue('XMPP_TIMEOUT', '10');
+$timeout = (int)envValue('XMPP_TIMEOUT', '30');
 $logFile = envValue('XMPP_LOG', sys_get_temp_dir() . '/easy-xmpp-e2e.log');
 
 if ($port < 1 || $port > 65535) {
