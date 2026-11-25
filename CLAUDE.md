@@ -10,6 +10,7 @@ Easy-XMPP is a PHP XMPP client library (based on xmpphp), published as `mark-fis
 
 ```
 composer install          # Install dependencies
+composer cs               # PSR-12 check (phpcs)
 php tests/Client.php      # Run the manual test client (requires a real XMPP server)
 ```
 
@@ -23,7 +24,7 @@ EasyXmpp\Stream\XMLStream    # TCP socket, XML parsing, event dispatch, handler 
         └── EasyXmpp\BOSH    # XMPP over BOSH (HTTP long-polling via cURL)
 
 EasyXmpp\Util\XMLObj          # Parsed XML element tree (name, ns, attrs, subs, data)
-EasyXmpp\Util\Log             # Leveled logging (DEBUG..EMERGENCY) with file output
+EasyXmpp\Util\Log             # Default PSR-3 logger, writes via error_log when enabled
 EasyXmpp\Support\Config       # ArrayAccess with dot-notation get()
 EasyXmpp\XEP\Roster           # Contact list and presence tracking
 EasyXmpp\Exceptions\Exception  # Base exception
@@ -65,6 +66,8 @@ BOSH (`BOSH`): HTTP POST to `/bosh` endpoint with session management via `$_SESS
 ### Key design notes
 
 - The parser is reset on TLS negotiation and stream restart (`reset()`), which resends the stream header and reinitializes the XML parser.
-- `$authed` flag controls whether `features_handler` proceeds to bind or auth.
+- `$authed` flag controls whether `featuresHandler` proceeds to bind or auth.
 - `stream_socket_client` is used for TCP; `curl` for BOSH HTTP transport.
-- The library has no external dependencies (`composer.json` `require` is empty).
+- Automatic reconnect is **off by default** (`reconnect` config, default `false`); long-running processes are expected to be supervised externally. When disabled, connection failures call `dropConnection()` and set `disconnected = true`.
+- Logging uses `Psr\Log\LoggerInterface`; pass any PSR-3 logger via the `logger` config key, otherwise the built-in `Log` is used.
+- The only external dependency is `psr/log`; BOSH additionally needs `ext-curl`/`ext-simplexml`/`ext-dom`.
