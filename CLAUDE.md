@@ -11,10 +11,11 @@ Easy-XMPP is a PHP XMPP client library (based on xmpphp), published as `mark-fis
 ```
 composer install          # Install dependencies
 composer cs               # PSR-12 check (phpcs)
-php tests/Client.php      # Run the manual test client (requires a real XMPP server)
+php tests/E2E.php         # End-to-end test against a real XMPP server (env overridable)
+php tests/Client.php      # Interactive manual test client (requires a real XMPP server)
 ```
 
-There is no test framework (PHPUnit/Pest) or CI configured — the single test file is a manual integration script.
+There is no test framework (PHPUnit/Pest) or CI configured. `tests/E2E.php` is a bounded integration test; `tests/Client.php` is an interactive manual client.
 
 ## Architecture
 
