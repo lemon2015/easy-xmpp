@@ -15,6 +15,8 @@
  *   XMPP_MUC_ROOM    默认 muc-e2e-<timestamp>
  *   XMPP_MUC_NICK    默认 e2e-<pid>
  *   XMPP_MUC_PEER_NICK 默认 peer-<pid>
+ *   XMPP_PEER_USER   默认 claude_peer
+ *   XMPP_PEER_PASSWORD 默认与 XMPP_PASSWORD 相同
  *   XMPP_TIMEOUT     默认 30 秒
  *   XMPP_LOG         默认 <tmp>/easy-xmpp-muc-e2e.log
  */
@@ -72,6 +74,16 @@ function hasNick(array $events, string $nick): bool
     return false;
 }
 
+function findEvent(array $events, callable $predicate)
+{
+    foreach ($events as $event) {
+        if ($predicate($event)) {
+            return $event;
+        }
+    }
+    return null;
+}
+
 class MucE2ELogger extends AbstractLogger
 {
     /** @var string[] */
@@ -100,6 +112,10 @@ $service = envValue('XMPP_MUC_SERVICE', 'conference.' . $host);
 $room = envValue('XMPP_MUC_ROOM', 'muc-e2e-' . time());
 $nick = envValue('XMPP_MUC_NICK', 'e2e-' . getmypid());
 $peerNick = envValue('XMPP_MUC_PEER_NICK', 'peer-' . getmypid());
+$peerUser = envValue('XMPP_PEER_USER', 'claude_peer');
+$peerPassword = envValue('XMPP_PEER_PASSWORD', $password);
+$selfJid = $user . '@' . $host;
+$peerJid = $peerUser . '@' . $host;
 $timeout = (int)envValue('XMPP_TIMEOUT', '30');
 $logFile = envValue('XMPP_LOG', sys_get_temp_dir() . '/easy-xmpp-muc-e2e.log');
 
@@ -160,9 +176,11 @@ try {
     if (!hasBody(pump($conn, 'muc_message', 5), $body)) {
         throw new RuntimeException('own group message was not echoed');
     }
-    echo "[2/5] own group message echoed\n";
+    echo "[2/8] own group message echoed\n";
 
     $peerConfig = $config;
+    $peerConfig['user'] = $peerUser;
+    $peerConfig['password'] = $peerPassword;
     $peerConfig['resource'] = 'muc-peer-' . getmypid();
     $peer = new XMPP($peerConfig);
     $peer->connect($timeout, false, true);
@@ -170,27 +188,62 @@ try {
         throw new RuntimeException('peer session_start timeout');
     }
     $peer->presence('muc peer');
-
     $peerMuc = new MUC($peer, $service, $timeout);
+
+    $muc->invite($room, $peerJid, 'join us');
+    $invite = findEvent(pump($peer, 'muc_invite', 5), function ($event) {
+        return ($event['inviter'] ?? '') !== '' || ($event['reason'] ?? '') === 'join us';
+    });
+    if ($invite === null) {
+        throw new RuntimeException('peer did not receive mediated invite');
+    }
+    echo "[3/8] invite received, inviter=" . ($invite['inviter'] ?? '-') . "\n";
+
+    $peerMuc->declineInvite($room, $selfJid, 'not now');
+    $decline = findEvent(pump($conn, 'muc_invite_declined', 5), function ($event) use ($peerJid) {
+        return strpos((string)($event['invitee'] ?? ''), $peerJid) === 0;
+    });
+    if ($decline === null) {
+        throw new RuntimeException('inviter did not receive decline notice');
+    }
+    echo "[4/8] decline received, invitee=" . ($decline['invitee'] ?? '-') . "\n";
+
     $peerMuc->join($room, $peerNick);
-    if (!hasNick(pump($conn, 'muc_occupant_joined', 5), $peerNick)) {
+    $peerEvent = findEvent(pump($conn, 'muc_occupant_joined', 5), function ($event) use ($peerNick) {
+        return ($event['nick'] ?? null) === $peerNick;
+    });
+    if ($peerEvent === null) {
         throw new RuntimeException('occupant_joined for peer not received');
     }
-    echo "[3/5] peer joined, occupant_joined received\n";
+    if (($peerEvent['role'] ?? null) === null || ($peerEvent['affiliation'] ?? null) === null) {
+        throw new RuntimeException('occupant item role/affiliation missing');
+    }
+    echo "[5/8] peer joined, role=" . $peerEvent['role']
+        . ", affiliation=" . $peerEvent['affiliation'] . "\n";
 
     $peerBody = 'hello from ' . $peerNick;
     $peerMuc->sendGroupMessage($room, $peerBody);
     if (!hasBody(pump($conn, 'muc_message', 5), $peerBody)) {
         throw new RuntimeException('peer group message not received');
     }
-    echo "[4/5] peer group message received\n";
+    echo "[6/8] peer group message received\n";
+
+    $topic = 'topic ' . time();
+    $muc->setTopic($room, $topic);
+    $subject = findEvent(pump($conn, 'muc_subject', 5), function ($event) use ($topic) {
+        return ($event['subject'] ?? null) === $topic;
+    });
+    if ($subject === null) {
+        throw new RuntimeException('room subject not received');
+    }
+    echo "[7/8] topic set/received\n";
 
     $peerMuc->leave($room, $peerNick);
     if (!hasNick(pump($conn, 'muc_occupant_left', 5), $peerNick)) {
         throw new RuntimeException('occupant_left for peer not received');
     }
     $peer->disconnect();
-    echo "[5/5] peer left, occupant_left received\n";
+    echo "[8/8] peer left, occupant_left received\n";
 
     if (!$muc->leave($room, $nick)) {
         throw new RuntimeException('self leave timeout');
