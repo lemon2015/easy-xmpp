@@ -43,6 +43,10 @@ class XMPP extends XMLStream
      */
     protected $basejid;
     /**
+     * @var string
+     */
+    protected $jid;
+    /**
      * @var boolean
      */
     protected $authed = false;
@@ -148,9 +152,9 @@ class XMPP extends XMLStream
             $type = 'chat';
         }
 
-        $to = htmlspecialchars($to);
-        $body = htmlspecialchars($body);
-        $subject = htmlspecialchars($subject);
+        $to = htmlspecialchars((string)$to);
+        $body = htmlspecialchars((string)$body);
+        $subject = htmlspecialchars((string)$subject);
 
         $out = "<message from=\"{$this->fulljid}\" to=\"$to\" type='$type'>";
         if ($subject)
@@ -174,8 +178,8 @@ class XMPP extends XMLStream
     {
         if ($type == 'available')
             $type = '';
-        $to = htmlspecialchars($to);
-        $status = htmlspecialchars($status);
+        $to = htmlspecialchars((string)$to);
+        $status = htmlspecialchars((string)$status);
         if ($show == 'unavailable')
             $type = 'unavailable';
 

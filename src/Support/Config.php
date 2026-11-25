@@ -40,7 +40,7 @@ class Config implements ArrayAccess
      *
      * @since 5.0.0
      */
-    public function offsetExists($offset)
+    public function offsetExists($offset): bool
     {
         return array_key_exists($offset, $this->config);
     }
@@ -58,7 +58,7 @@ class Config implements ArrayAccess
      *
      * @since 5.0.0
      */
-    public function offsetGet($offset)
+    public function offsetGet($offset): mixed
     {
         return $this->get($offset);
     }
@@ -107,7 +107,7 @@ class Config implements ArrayAccess
      *
      * @since 5.0.0
      */
-    public function offsetSet($offset, $value)
+    public function offsetSet($offset, $value): void
     {
         if (isset($this->config[$offset])) {
             $this->config[$offset] = $value;
@@ -125,7 +125,7 @@ class Config implements ArrayAccess
      *
      * @since 5.0.0
      */
-    public function offsetUnset($offset)
+    public function offsetUnset($offset): void
     {
         if (isset($this->config[$offset])) {
             unset($this->config[$offset]);

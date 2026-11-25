@@ -13,10 +13,20 @@
             "email": "332778006@qq.com"
         }
     ],
+    "require": {
+        "php": "^8.0",
+        "ext-mbstring": "*",
+        "ext-openssl": "*",
+        "ext-xml": "*"
+    },
+    "suggest": {
+        "ext-curl": "Required for BOSH connections",
+        "ext-dom": "Required for BOSH connections",
+        "ext-simplexml": "Required for BOSH connections"
+    },
     "autoload": {
         "psr-4": {
             "EasyXmpp\\": "src/"
         }
-    },
-    "require": {}
+    }
 }
