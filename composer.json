@@ -20,6 +20,9 @@
         "ext-openssl": "*",
         "ext-xml": "*"
     },
+    "require-dev": {
+        "squizlabs/php_codesniffer": "^3.13"
+    },
     "suggest": {
         "ext-curl": "Required for BOSH connections",
         "ext-dom": "Required for BOSH connections",
@@ -28,6 +31,17 @@
     "autoload": {
         "psr-4": {
             "EasyXmpp\\": "src/"
+        }
+    },
+    "scripts": {
+        "cs": "phpcs",
+        "cs:fix": "phpcbf"
+    },
+    "config": {
+        "audit": {
+            "ignore": [
+                "PKSA-rdkp-vv9z-mjkg"
+            ]
         }
     }
 }

@@ -122,6 +122,14 @@ $conn = new XMPP($config);
 
 非 PSR-3 的框架日志类，先包一层 PSR-3 适配器再传入。
 
+## 开发
+
+```shell
+composer install
+composer cs      # 检查 PSR-12
+composer cs:fix  # 自动修复
+```
+
 ## License
 
 MIT
