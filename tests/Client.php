@@ -3,22 +3,14 @@
 require dirname(__DIR__)."/vendor/autoload.php";
 
 use EasyXmpp\XMPP;
-use EasyXmpp\Util\Log;
 use EasyXmpp\Exceptions\Exception;
 
-$config = [
-    "host"=>"example.com",
-    "port"=>"7222",
-    "user"=>"test-user",
-    "password"=>"REDACTED",
-    "resource"=>"cli",
-    "server"=>"",// 内网配ip
-    "printlog"=>true,
-    "loglevel"=>Log::DEBUG,
-    "timeout"=>30,
-    "persistent"=>true,
-    "logfile"=>"/tmp/xmpp-test.log"
-];
+$configFile = __DIR__ . '/config.local.php';
+if (!is_file($configFile)) {
+    fwrite(STDERR, "Missing tests/config.local.php. Copy tests/config.example.php and fill in your server.\n");
+    exit(2);
+}
+$config = require $configFile;
 
 $conn = new XMPP($config);
 $conn->autoSubscribe();

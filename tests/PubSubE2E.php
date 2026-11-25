@@ -6,11 +6,11 @@
  * 用法:
  *   php tests/PubSubE2E.php
  *
- * 环境变量（均可选）:
- *   XMPP_HOST          默认 example.com
- *   XMPP_PORT          默认 7222
- *   XMPP_USER          默认 pubsub-user_<time>
- *   XMPP_PASSWORD      默认 test
+ * 环境变量:
+ *   XMPP_HOST          必填
+ *   XMPP_PORT          默认 5222
+ *   XMPP_USER          必填
+ *   XMPP_PASSWORD      可选
  *   XMPP_PUBSUB_SERVICE 默认 pubsub.<XMPP_HOST>
  *   XMPP_PUBSUB_NODE   默认 easyxmpp-test-<time>
  *   XMPP_TIMEOUT       默认 30 秒
@@ -70,11 +70,15 @@ class PubSubCollector
     public function onItem($payload) { $this->items[] = $payload; }
 }
 
-$host = envValue('XMPP_HOST', 'example.com');
-$port = (int)envValue('XMPP_PORT', '7222');
+$host = envValue('XMPP_HOST', '');
+$port = (int)envValue('XMPP_PORT', '5222');
 $stamp = time();
-$user = envValue('XMPP_USER', 'pubsub-user_' . $stamp);
-$password = envValue('XMPP_PASSWORD', 'test');
+$user = envValue('XMPP_USER', '');
+$password = envValue('XMPP_PASSWORD', '');
+if ($host === '' || $user === '') {
+    fwrite(STDERR, "XMPP_HOST and XMPP_USER are required\n");
+    exit(2);
+}
 $service = envValue('XMPP_PUBSUB_SERVICE', 'pubsub.' . $host);
 $node = envValue('XMPP_PUBSUB_NODE', 'easyxmpp-test-' . $stamp);
 $timeout = (int)envValue('XMPP_TIMEOUT', '30');

@@ -6,16 +6,16 @@
  * 用法:
  *   php tests/MucE2E.php
  *
- * 环境变量（均可选）:
- *   XMPP_HOST        默认 example.com
- *   XMPP_PORT        默认 7222
- *   XMPP_USER        默认 test-user
- *   XMPP_PASSWORD    默认 test
+ * 环境变量:
+ *   XMPP_HOST        必填
+ *   XMPP_PORT        默认 5222
+ *   XMPP_USER        必填
+ *   XMPP_PASSWORD    可选
  *   XMPP_MUC_SERVICE 默认 conference.<XMPP_HOST>
  *   XMPP_MUC_ROOM    默认 muc-e2e-<timestamp>
  *   XMPP_MUC_NICK    默认 e2e-<pid>
  *   XMPP_MUC_PEER_NICK 默认 peer-<pid>
- *   XMPP_PEER_USER   默认 test-user-peer
+ *   XMPP_PEER_USER   默认 <XMPP_USER>_peer
  *   XMPP_PEER_PASSWORD 默认与 XMPP_PASSWORD 相同
  *   XMPP_TIMEOUT     默认 30 秒
  *   XMPP_LOG         默认 <tmp>/easy-xmpp-muc-e2e.log
@@ -104,15 +104,19 @@ class MucE2ELogger extends AbstractLogger
     }
 }
 
-$host = envValue('XMPP_HOST', 'example.com');
-$port = (int)envValue('XMPP_PORT', '7222');
-$user = envValue('XMPP_USER', 'test-user');
-$password = envValue('XMPP_PASSWORD', 'test');
+$host = envValue('XMPP_HOST', '');
+$port = (int)envValue('XMPP_PORT', '5222');
+$user = envValue('XMPP_USER', '');
+$password = envValue('XMPP_PASSWORD', '');
+if ($host === '' || $user === '') {
+    fwrite(STDERR, "XMPP_HOST and XMPP_USER are required\n");
+    exit(2);
+}
 $service = envValue('XMPP_MUC_SERVICE', 'conference.' . $host);
 $room = envValue('XMPP_MUC_ROOM', 'muc-e2e-' . time());
 $nick = envValue('XMPP_MUC_NICK', 'e2e-' . getmypid());
 $peerNick = envValue('XMPP_MUC_PEER_NICK', 'peer-' . getmypid());
-$peerUser = envValue('XMPP_PEER_USER', 'test-user-peer');
+$peerUser = envValue('XMPP_PEER_USER', $user . '_peer');
 $peerPassword = envValue('XMPP_PEER_PASSWORD', $password);
 $selfJid = $user . '@' . $host;
 $peerJid = $peerUser . '@' . $host;

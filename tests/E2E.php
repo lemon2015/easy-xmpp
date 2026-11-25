@@ -7,11 +7,11 @@
  * 用法:
  *   php tests/E2E.php
  *
- * 环境变量（均可选）:
- *   XMPP_HOST      默认 example.com
- *   XMPP_PORT      默认 7222
- *   XMPP_USER      默认 test-user
- *   XMPP_PASSWORD  默认 test
+ * 环境变量:
+ *   XMPP_HOST      必填
+ *   XMPP_PORT      默认 5222
+ *   XMPP_USER      必填
+ *   XMPP_PASSWORD  可选（为空则匿名）
  *   XMPP_RESOURCE  默认 e2e-<pid>
  *   XMPP_SERVER    默认空（使用 host）
  *   XMPP_TLS       默认 1，设为 0 关闭 STARTTLS
@@ -90,10 +90,14 @@ class E2EXMPP extends XMPP
     }
 }
 
-$host = envValue('XMPP_HOST', 'example.com');
-$port = (int)envValue('XMPP_PORT', '7222');
-$user = envValue('XMPP_USER', 'test-user');
-$password = envValue('XMPP_PASSWORD', 'test');
+$host = envValue('XMPP_HOST', '');
+$port = (int)envValue('XMPP_PORT', '5222');
+$user = envValue('XMPP_USER', '');
+$password = envValue('XMPP_PASSWORD', '');
+if ($host === '' || $user === '') {
+    fwrite(STDERR, "XMPP_HOST and XMPP_USER are required\n");
+    exit(2);
+}
 $resource = envValue('XMPP_RESOURCE', 'e2e-' . getmypid());
 $server = envValue('XMPP_SERVER', '');
 $tls = envValue('XMPP_TLS', '1') !== '0';

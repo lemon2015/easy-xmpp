@@ -9,22 +9,15 @@
 require dirname(__DIR__) . '/vendor/autoload.php';
 
 use EasyXmpp\XMPP;
-use EasyXmpp\Util\Log;
 use EasyXmpp\Exceptions\Exception;
 
-// ---- 配置 ----
-$config = [
-    'host'     => 'example.com',
-    'port'     => 7222,
-    'user'     => 'test-user',
-    'password' => 'REDACTED',
-    'resource' => 'forwarder-test',
-    'server'   => 'example.com',
-    'printlog' => true,
-    'loglevel' => Log::DEBUG,
-    'logfile'  => '/tmp/xmpp-forwarder-test.log',
-    'reconnect' => true
-];
+// ---- 配置：从本地忽略文件读取 ----
+$configFile = __DIR__ . '/config.local.php';
+if (!is_file($configFile)) {
+    fwrite(STDERR, "Missing tests/config.local.php. Copy tests/config.example.php and fill in your server.\n");
+    exit(2);
+}
+$config = require $configFile;
 
 $stat = ['recv' => 0, 'skip' => 0];
 

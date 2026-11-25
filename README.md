@@ -134,10 +134,20 @@ composer cs:fix  # 自动修复
 ## 测试
 
 ```shell
-php tests/E2E.php   # 或 composer e2e
+php tests/E2E.php       # 或 composer e2e
+php tests/MucE2E.php    # 或 composer muc
+php tests/PubSubE2E.php # 或 composer pubsub
 ```
 
-默认连接 `example.com:7222`，账号密码随意。可用环境变量覆盖：`XMPP_HOST`、`XMPP_PORT`、`XMPP_USER`、`XMPP_PASSWORD`、`XMPP_RESOURCE`、`XMPP_SERVER`、`XMPP_TLS=0`、`XMPP_TIMEOUT`、`XMPP_LOG`。
+测试不内置任何服务器地址或账号，运行时必须显式提供：
+
+```shell
+XMPP_HOST=xmpp.example.com XMPP_USER=test-user XMPP_PASSWORD=... php tests/E2E.php
+```
+
+常用变量：`XMPP_HOST`、`XMPP_USER`（必填），`XMPP_PORT`（默认 5222）、`XMPP_PASSWORD`、`XMPP_MUC_SERVICE`、`XMPP_PUBSUB_SERVICE`、`XMPP_PEER_USER`、`XMPP_TIMEOUT`、`XMPP_LOG`。
+
+`tests/Client.php` 和 `tests/ForwarderTest.php` 从 `tests/config.local.php` 读取配置：复制 `tests/config.example.php` 为 `tests/config.local.php` 并填写，后者已被 `.gitignore` 忽略。
 
 ## MUC 房间（XEP-0045）
 
