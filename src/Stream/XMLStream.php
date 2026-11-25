@@ -179,8 +179,12 @@ class XMLStream
      */
     public function __destruct()
     {
-        if (!$this->disconnected && $this->socket) {
-            $this->disconnect();
+        if (!$this->disconnected) {
+            if (is_resource($this->socket)) {
+                $this->disconnect();
+            } else {
+                $this->dropConnection();
+            }
         }
     }
 
@@ -190,7 +194,8 @@ class XMLStream
     public function disconnect()
     {
         $this->log->debug("Disconnecting...");
-        if (false == (bool)$this->socket) {
+        if (!is_resource($this->socket)) {
+            $this->dropConnection();
             return;
         }
         $this->reconnect = false;
@@ -208,6 +213,11 @@ class XMLStream
     public function send($msg, $timeout = null)
     {
         $this->log->debug("SEND: $msg");
+        if (!is_resource($this->socket)) {
+            $this->log->error("Cannot send: connection is not available.");
+            $this->dropConnection();
+            return false;
+        }
         if (is_null($timeout)) {
             $secs = null;
             $usecs = null;
@@ -433,6 +443,10 @@ class XMLStream
      */
     public function processOnce($maximum = 5)
     {
+        if (!is_resource($this->socket)) {
+            $this->dropConnection();
+            return false;
+        }
 
         $remaining = $maximum;
 
@@ -794,6 +808,10 @@ class XMLStream
      */
     public function read()
     {
+        if (!is_resource($this->socket)) {
+            $this->dropConnection();
+            return false;
+        }
         $buff = @fread($this->socket, 1024);
         if (!$buff) {
             if ($this->reconnect) {
@@ -815,6 +833,9 @@ class XMLStream
 
     public function readyToProcess()
     {
+        if (!is_resource($this->socket)) {
+            return false;
+        }
         $read = array($this->socket);
         $write = array();
         $except = array();
