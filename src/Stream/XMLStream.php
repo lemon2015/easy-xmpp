@@ -372,7 +372,7 @@ class XMLStream
         $this->until_count[$event_key] = 0;
         $updated = '';
         while (!$this->disconnected and $this->until_count[$event_key] < 1 and (time() - $start < $timeout or $timeout == -1)) {
-            $this->__process();
+            $this->processOnce();
         }
         if (array_key_exists($event_key, $this->until_payload)) {
             $payload = $this->until_payload[$event_key];
@@ -391,7 +391,7 @@ class XMLStream
      * NULL -> wait forever and ever
      * integer -> process for this amount of time
      */
-    public function __process($maximum = 5)
+    public function processOnce($maximum = 5)
     {
 
         $remaining = $maximum;
@@ -565,7 +565,7 @@ class XMLStream
      */
     public function process()
     {
-        $this->__process(NULL);
+        $this->processOnce(NULL);
     }
 
     /**
@@ -577,16 +577,16 @@ class XMLStream
     public function processTime($timeout = NULL)
     {
         if (is_null($timeout)) {
-            return $this->__process(NULL);
+            return $this->processOnce(NULL);
         } else {
-            return $this->__process($timeout * 1000000);
+            return $this->processOnce($timeout * 1000000);
         }
     }
 
     /**
      * Obsolete?
      */
-    public function Xapply_socket($socket)
+    public function xapplySocket($socket)
     {
         $this->socket = $socket;
     }

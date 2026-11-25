@@ -109,15 +109,15 @@ class XMPP extends XMLStream
         $this->stream_end = '</stream:stream>';
         $this->default_ns = 'jabber:client';
 
-        $this->addXPathHandler('{http://etherx.jabber.org/streams}features', 'features_handler');
-        $this->addXPathHandler('{urn:ietf:params:xml:ns:xmpp-sasl}success', 'sasl_success_handler');
-        $this->addXPathHandler('{urn:ietf:params:xml:ns:xmpp-sasl}failure', 'sasl_failure_handler');
-        $this->addXPathHandler('{urn:ietf:params:xml:ns:xmpp-tls}proceed', 'tls_proceed_handler');
-        $this->addXPathHandler('{jabber:client}message', 'message_handler');
-        $this->addXPathHandler('{jabber:client}presence', 'presence_handler');
-        $this->addXPathHandler('iq/{jabber:iq:roster}query', 'roster_iq_handler');
+        $this->addXPathHandler('{http://etherx.jabber.org/streams}features', 'featuresHandler');
+        $this->addXPathHandler('{urn:ietf:params:xml:ns:xmpp-sasl}success', 'saslSuccessHandler');
+        $this->addXPathHandler('{urn:ietf:params:xml:ns:xmpp-sasl}failure', 'saslFailureHandler');
+        $this->addXPathHandler('{urn:ietf:params:xml:ns:xmpp-tls}proceed', 'tlsProceedHandler');
+        $this->addXPathHandler('{jabber:client}message', 'messageHandler');
+        $this->addXPathHandler('{jabber:client}presence', 'presenceHandler');
+        $this->addXPathHandler('iq/{jabber:iq:roster}query', 'rosterIqHandler');
         // For DIGEST-MD5 auth :
-        $this->addXPathHandler('{urn:ietf:params:xml:ns:xmpp-sasl}challenge', 'sasl_challenge_handler');
+        $this->addXPathHandler('{urn:ietf:params:xml:ns:xmpp-sasl}challenge', 'saslChallengeHandler');
     }
 
     /**
@@ -222,7 +222,7 @@ class XMPP extends XMLStream
      *
      * @param string $xml
      */
-    public function message_handler($xml)
+    public function messageHandler($xml)
     {
         if (isset($xml->attrs['type'])) {
             $payload['type'] = $xml->attrs['type'];
@@ -241,7 +241,7 @@ class XMPP extends XMLStream
      *
      * @param string $xml
      */
-    public function presence_handler($xml)
+    public function presenceHandler($xml)
     {
         $payload['type'] = (isset($xml->attrs['type'])) ? $xml->attrs['type'] : 'available';
         $payload['show'] = (isset($xml->sub('show')->data)) ? $xml->sub('show')->data : $payload['type'];
@@ -283,7 +283,7 @@ class XMPP extends XMLStream
     public function getVCard($jid = Null)
     {
         $id = $this->getID();
-        $this->addIdHandler($id, 'vcard_get_handler');
+        $this->addIdHandler($id, 'vcardGetHandler');
         if ($jid) {
             $this->send("<iq type='get' id='$id' to='$jid'><vCard xmlns='vcard-temp' /></iq>");
         } else {
@@ -296,13 +296,13 @@ class XMPP extends XMLStream
      *
      * @param string $xml
      */
-    protected function features_handler($xml)
+    protected function featuresHandler($xml)
     {
         if ($xml->hasSub('starttls') and $this->use_encryption) {
             $this->send("<starttls xmlns='urn:ietf:params:xml:ns:xmpp-tls'><required /></starttls>");
         } else if ($xml->hasSub('bind') and $this->authed) {
             $id = $this->getId();
-            $this->addIdHandler($id, 'resource_bind_handler');
+            $this->addIdHandler($id, 'resourceBindHandler');
             $this->send("<iq xmlns=\"jabber:client\" type=\"set\" id=\"$id\"><bind xmlns=\"urn:ietf:params:xml:ns:xmpp-bind\"><resource>{$this->resource}</resource></bind></iq>");
         } else {
             $this->log->notice("Attempting Auth...");
@@ -345,7 +345,7 @@ class XMPP extends XMLStream
      *
      * @param string $xml
      */
-    protected function sasl_success_handler($xml)
+    protected function saslSuccessHandler($xml)
     {
         $this->log->notice("Auth success!");
         $this->authed = true;
@@ -357,7 +357,7 @@ class XMPP extends XMLStream
      *
      * @param string $xml
      */
-    protected function sasl_failure_handler($xml)
+    protected function saslFailureHandler($xml)
     {
         $this->log->error("Auth failed!");
         $this->disconnect();
@@ -370,7 +370,7 @@ class XMPP extends XMLStream
      *
      * @param string $xml
      */
-    protected function sasl_challenge_handler($xml)
+    protected function saslChallengeHandler($xml)
     {
         // Decode and parse the challenge string
         // (may be something like foo="bar",foo2="bar2,bar3,bar4",foo3=bar5 )
@@ -419,7 +419,7 @@ class XMPP extends XMLStream
      *
      * @param string $xml
      */
-    protected function resource_bind_handler($xml)
+    protected function resourceBindHandler($xml)
     {
         if ($xml->attrs['type'] == 'result') {
             $this->log->notice("Bound to " . $xml->sub('bind')->sub('jid')->data);
@@ -428,7 +428,7 @@ class XMPP extends XMLStream
             $this->jid = $jidarray[0];
         }
         $id = $this->getId();
-        $this->addIdHandler($id, 'session_start_handler');
+        $this->addIdHandler($id, 'sessionStartHandler');
         $this->send("<iq xmlns='jabber:client' type='set' id='$id'><session xmlns='urn:ietf:params:xml:ns:xmpp-session' /></iq>");
     }
 
@@ -438,7 +438,7 @@ class XMPP extends XMLStream
      *
      * @param string $xml
      */
-    protected function roster_iq_handler($xml)
+    protected function rosterIqHandler($xml)
     {
         $status = "result";
         $xmlroster = $xml->sub('query');
@@ -473,7 +473,7 @@ class XMPP extends XMLStream
      *
      * @param string $xml
      */
-    protected function session_start_handler($xml)
+    protected function sessionStartHandler($xml)
     {
         $this->log->notice("Session started");
         $this->session_started = true;
@@ -495,7 +495,7 @@ class XMPP extends XMLStream
      *
      * @param string $xml
      */
-    protected function tls_proceed_handler($xml)
+    protected function tlsProceedHandler($xml)
     {
         $this->log->notice("Starting TLS encryption");
         $res = stream_socket_enable_crypto($this->socket, true, STREAM_CRYPTO_METHOD_SSLv23_CLIENT);
@@ -510,7 +510,7 @@ class XMPP extends XMLStream
      *
      * @param XML Object $xml
      */
-    protected function vcard_get_handler($xml)
+    protected function vcardGetHandler($xml)
     {
         $vcard_array = array();
         $vcard = $xml->sub('vcard');
@@ -538,7 +538,7 @@ class XMPP extends XMLStream
             $id = $this->getID();
         }
         // 注册 ID 回调，用于处理服务器返回的 pong 响应
-        $this->addIdHandler($id, "ping_response_handler");
+        $this->addIdHandler($id, "pingResponseHandler");
         // <iq type='get' to='im.bangwo8.com' id='f5805f84-1a09-4dee-a777-67bfc001e12c:ping' xmlns='jabber:client'><ping xmlns='urn:xmpp:ping'/></iq>
         $xml = "<iq type='get' to='{$this->host}' id='{$id}'>";
         $xml .= "<ping xmlns='urn:xmpp:ping'/>";
@@ -549,7 +549,7 @@ class XMPP extends XMLStream
     /**
      * 处理 ping 请求的响应
      */
-    protected function ping_response_handler($xml)
+    protected function pingResponseHandler($xml)
     {
         // 获取所有属性，例如 id, from, to, type 等
         $attrs = $xml->attrs;

@@ -24,7 +24,7 @@ class BOSH extends XMPP
             $this->loadSession();
         }
         if (!$this->sid) {
-            $body = $this->__buildBody();
+            $body = $this->buildBody();
             $body->addAttribute('hold', '1');
             $body->addAttribute('to', $this->host);
             $body->addAttribute('route', "xmpp:{$this->host}:{$this->port}");
@@ -35,7 +35,7 @@ class BOSH extends XMPP
             $body->addAttribute('ack', '1');
             $buff = "<stream:stream xmlns='jabber:client' xmlns:stream='http://etherx.jabber.org/streams'>";
             xml_parse($this->parser, $buff, false);
-            $response = $this->__sendBody($body);
+            $response = $this->sendBody($body);
             $rxml = new \SimpleXMLElement($response);
             $this->sid = $rxml['sid'];
         } else {
@@ -58,7 +58,7 @@ class BOSH extends XMPP
             $this->fulljid = $_SESSION['XMPPHP_BOSH_fulljid'];
     }
 
-    public function __buildBody($sub = null)
+    public function buildBody($sub = null)
     {
         $xml = new \SimpleXMLElement("<body xmlns='http://jabber.org/protocol/httpbind' xmlns:xmpp='urn:xmpp:xbosh' />");
         $xml->addAttribute('content', 'text/xml; charset=utf-8');
@@ -78,10 +78,10 @@ class BOSH extends XMPP
         return $xml;
     }
 
-    public function __sendBody($body = null, $recv = true)
+    public function sendBody($body = null, $recv = true)
     {
         if (!$body) {
-            $body = $this->__buildBody();
+            $body = $this->buildBody();
         }
 
         $ch = curl_init($this->http_server);
@@ -101,17 +101,17 @@ class BOSH extends XMPP
         return $output;
     }
 
-    public function __process($maximum = 5)
+    public function processOnce($maximum = 5)
     {
         if ($this->http_buffer) {
-            $this->__parseBuffer();
+            $this->parseBuffer();
         } else {
-            $this->__sendBody();
-            $this->__parseBuffer();
+            $this->sendBody();
+            $this->parseBuffer();
         }
     }
 
-    public function __parseBuffer()
+    public function parseBuffer()
     {
         while ($this->http_buffer) {
             $idx = key($this->http_buffer);
@@ -134,8 +134,8 @@ class BOSH extends XMPP
         $this->log->debug("SEND: $msg");
         $msg = new \SimpleXMLElement($msg);
         #$msg->addAttribute('xmlns', 'jabber:client');
-        $this->__sendBody($this->__buildBody($msg), true);
-        #$this->__parseBuffer();
+        $this->sendBody($this->buildBody($msg), true);
+        #$this->parseBuffer();
     }
 
     public function reset()
@@ -145,11 +145,11 @@ class BOSH extends XMPP
         $this->xmlobj = array();
         $this->setupParser();
         #$this->send($this->stream_start);
-        $body = $this->__buildBody();
+        $body = $this->buildBody();
         $body->addAttribute('to', $this->host);
         $body->addAttribute('xmpp:restart', 'true', 'urn:xmpp:xbosh');
         $buff = "<stream:stream xmlns='jabber:client' xmlns:stream='http://etherx.jabber.org/streams'>";
-        $response = $this->__sendBody($body);
+        $response = $this->sendBody($body);
         $this->been_reset = true;
         xml_parse($this->parser, $buff, false);
     }
