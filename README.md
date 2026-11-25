@@ -2,7 +2,7 @@
 XMPP library (based on xmpphp)
 
 ## 环境需求
-PHP > 5.x
+PHP >= 8.0（已在 PHP 8.5 下验证）
 
 ## 安装
 

@@ -164,9 +164,8 @@ class XMLStream
         $this->parser = xml_parser_create('UTF-8');
         xml_parser_set_option($this->parser, XML_OPTION_SKIP_WHITE, 1);
         xml_parser_set_option($this->parser, XML_OPTION_TARGET_ENCODING, 'UTF-8');
-        xml_set_object($this->parser, $this);
-        xml_set_element_handler($this->parser, 'startXML', 'endXML');
-        xml_set_character_data_handler($this->parser, 'charXML');
+        xml_set_element_handler($this->parser, [$this, 'startXML'], [$this, 'endXML']);
+        xml_set_character_data_handler($this->parser, [$this, 'charXML']);
     }
 
     /**
@@ -285,7 +284,7 @@ class XMLStream
             $this->log->log("Connecting to $conntype://{$this->server}:{$this->port}");
             try {
                 $this->socket = @stream_socket_client("$conntype://{$this->server}:{$this->port}", $errno, $errstr, $timeout, $conflag);
-            } catch (Exception $e) {
+            } catch (\Exception $e) {
                 throw new MyException($e->getMessage());
             }
             if (!$this->socket) {

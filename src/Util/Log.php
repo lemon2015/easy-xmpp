@@ -42,7 +42,7 @@ class Log implements LoggerInterface
      */
     public function __construct($printout = false, $runlevel = self::NOTICE, $logfile = "")
     {
-        $this->printout = (boolean)$printout;
+        $this->printout = (bool)$printout;
         $this->runlevel = (int)$runlevel;
         $this->logfile = $logfile;
     }
