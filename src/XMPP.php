@@ -4,9 +4,8 @@ namespace EasyXmpp;
 
 use EasyXmpp\Exceptions\Exception;
 use EasyXmpp\Stream\XMLStream;
-use EasyXmpp\Util\Log;
-use EasyXmpp\Util\LoggerInterface;
 use EasyXmpp\XEP\Roster;
+use Psr\Log\LoggerInterface;
 
 /**
  * Class XMPP
@@ -88,6 +87,9 @@ class XMPP extends XMLStream
         $loglevel = isset($config['loglevel']) ? $config['loglevel'] : 7;
         $logfile = isset($config['logfile']) ? $config['logfile'] : "";
         $logger = isset($config['logger']) ? $config['logger'] : null;
+        if ($logger !== null && !($logger instanceof LoggerInterface)) {
+            throw new \InvalidArgumentException('config["logger"] must implement Psr\Log\LoggerInterface');
+        }
         parent::__construct($host, $port, $printlog, $loglevel, false, $logfile, $logger);
 
         $this->user = $user;
@@ -230,7 +232,7 @@ class XMPP extends XMLStream
         $payload['from'] = $xml->attrs['from'];
         $payload['body'] = $xml->sub('body')->data;
         $payload['xml'] = $xml;
-        $this->log->log("Message: {$xml->sub('body')->data}", Log::INFO);
+        $this->log->info("Message: {$xml->sub('body')->data}");
         $this->event('message', $payload);
     }
 
@@ -250,7 +252,7 @@ class XMPP extends XMLStream
         if ($this->track_presence) {
             $this->roster->setPresence($payload['from'], $payload['priority'], $payload['show'], $payload['status']);
         }
-        $this->log->log("Presence: {$payload['from']} [{$payload['show']}] {$payload['status']}", Log::INFO);
+        $this->log->info("Presence: {$payload['from']} [{$payload['show']}] {$payload['status']}");
         if (array_key_exists('type', $xml->attrs) and $xml->attrs['type'] == 'subscribe') {
             if ($this->auto_subscribe) {
                 $this->send("<presence type='subscribed' to='{$xml->attrs['from']}' from='{$this->fulljid}' />");
@@ -303,7 +305,7 @@ class XMPP extends XMLStream
             $this->addIdHandler($id, 'resource_bind_handler');
             $this->send("<iq xmlns=\"jabber:client\" type=\"set\" id=\"$id\"><bind xmlns=\"urn:ietf:params:xml:ns:xmpp-bind\"><resource>{$this->resource}</resource></bind></iq>");
         } else {
-            $this->log->log("Attempting Auth...");
+            $this->log->notice("Attempting Auth...");
             if ($this->password) {
                 $mechanism = 'PLAIN'; // default;
                 if ($xml->hasSub('mechanisms') && $xml->sub('mechanisms')->hasSub('mechanism')) {
@@ -322,7 +324,7 @@ class XMPP extends XMLStream
                         // use the first available
                         $mechanism = reset($available);
                     }
-                    $this->log->log("Trying $mechanism (available : " . implode(',', $available) . ')');
+                    $this->log->notice("Trying $mechanism (available : " . implode(',', $available) . ')');
                 }
                 switch ($mechanism) {
                     case 'PLAIN':
@@ -345,7 +347,7 @@ class XMPP extends XMLStream
      */
     protected function sasl_success_handler($xml)
     {
-        $this->log->log("Auth success!");
+        $this->log->notice("Auth success!");
         $this->authed = true;
         $this->reset();
     }
@@ -357,7 +359,7 @@ class XMPP extends XMLStream
      */
     protected function sasl_failure_handler($xml)
     {
-        $this->log->log("Auth failed!", Log::ERROR);
+        $this->log->error("Auth failed!");
         $this->disconnect();
 
         throw new Exception('Auth failed!');
@@ -407,7 +409,7 @@ class XMPP extends XMLStream
                 // Second step
                 $this->send("<response xmlns='urn:ietf:params:xml:ns:xmpp-sasl'/>");
             } else {
-                $this->log->log("ERROR receiving challenge : " . $challenge, Log::ERROR);
+                $this->log->error("ERROR receiving challenge : " . $challenge);
             }
         }
     }
@@ -420,7 +422,7 @@ class XMPP extends XMLStream
     protected function resource_bind_handler($xml)
     {
         if ($xml->attrs['type'] == 'result') {
-            $this->log->log("Bound to " . $xml->sub('bind')->sub('jid')->data);
+            $this->log->notice("Bound to " . $xml->sub('bind')->sub('jid')->data);
             $this->fulljid = $xml->sub('bind')->sub('jid')->data;
             $jidarray = explode('/', $this->fulljid);
             $this->jid = $jidarray[0];
@@ -473,7 +475,7 @@ class XMPP extends XMLStream
      */
     protected function session_start_handler($xml)
     {
-        $this->log->log("Session started");
+        $this->log->notice("Session started");
         $this->session_started = true;
         $this->event('session_start');
     }
@@ -495,10 +497,10 @@ class XMPP extends XMLStream
      */
     protected function tls_proceed_handler($xml)
     {
-        $this->log->log("Starting TLS encryption");
+        $this->log->notice("Starting TLS encryption");
         $res = stream_socket_enable_crypto($this->socket, true, STREAM_CRYPTO_METHOD_SSLv23_CLIENT);
         if (!$res) {
-            $this->log->log("TLS encryption failed");
+            $this->log->notice("TLS encryption failed");
         }
         $this->reset();
     }
@@ -552,7 +554,7 @@ class XMPP extends XMLStream
         // 获取所有属性，例如 id, from, to, type 等
         $attrs = $xml->attrs;
         $id = $attrs['id'] ?? "";
-        $this->log->log("Ping response: " . $id);
+        $this->log->notice("Ping response: " . $id);
         $this->event('pong', $id);
     }
 

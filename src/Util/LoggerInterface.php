@@ -2,13 +2,11 @@
 
 namespace EasyXmpp\Util;
 
-interface LoggerInterface
+use Psr\Log\LoggerInterface as PsrLoggerInterface;
+
+/**
+ * @deprecated 使用 Psr\Log\LoggerInterface，本接口仅用于兼容旧引用。
+ */
+interface LoggerInterface extends PsrLoggerInterface
 {
-    /**
-     * Log a message at the given level.
-     *
-     * @param string $message
-     * @param int    $level   One of the Log::EMERGENCY, ..., Log::DEBUG constants
-     */
-    public function log($message, $level = Log::NOTICE);
 }

@@ -4,8 +4,8 @@ namespace EasyXmpp\Stream;
 
 use EasyXmpp\Exceptions\Exception as MyException;
 use EasyXmpp\Util\Log;
-use EasyXmpp\Util\LoggerInterface;
 use EasyXmpp\Util\XMLObj;
+use Psr\Log\LoggerInterface;
 
 class XMLStream
 {
@@ -107,7 +107,7 @@ class XMLStream
      */
     protected $until_payload = array();
     /**
-     * @var Log
+     * @var LoggerInterface
      */
     protected $log;
     /**
@@ -184,7 +184,7 @@ class XMLStream
      */
     public function disconnect()
     {
-        $this->log->log("Disconnecting...", Log::DEBUG);
+        $this->log->debug("Disconnecting...");
         if (false == (bool)$this->socket) {
             return;
         }
@@ -202,7 +202,7 @@ class XMLStream
      */
     public function send($msg, $timeout = NULL)
     {
-        $this->log->log("SEND: $msg", Log::DEBUG);
+        $this->log->debug("SEND: $msg");
         if (is_null($timeout)) {
             $secs = NULL;
             $usecs = NULL;
@@ -222,27 +222,27 @@ class XMLStream
         $select = @stream_select($read, $write, $except, $secs, $usecs);
 
         if ($select === false) {
-            $this->log->log("ERROR sending message; reconnecting.");
+            $this->log->notice("ERROR sending message; reconnecting.");
             $this->doReconnect();
             # TODO: retry send here
             return false;
         } else if ($select > 0) {
-            $this->log->log("Socket is ready; send it.", Log::DEBUG);
+            $this->log->debug("Socket is ready; send it.");
         } else {
-            $this->log->log("Socket is not ready; break.", Log::ERROR);
+            $this->log->error("Socket is not ready; break.");
             return false;
         }
 
         $sentbytes = @fwrite($this->socket, $msg);
-        $this->log->log("SENT: " . mb_substr($msg, 0, $sentbytes, '8bit'), Log::DEBUG);
+        $this->log->debug("SENT: " . mb_substr($msg, 0, $sentbytes, '8bit'));
         if ($sentbytes === false) {
-            $this->log->log("ERROR sending message; reconnecting.", Log::ERROR);
+            $this->log->error("ERROR sending message; reconnecting.");
             $this->doReconnect();
             return false;
         }
         //add fflush method to prevent msg blocked in socket buffer ，causing delay, especially in long run env
         @fflush($this->socket);
-        $this->log->log("Successfully sent $sentbytes bytes.", Log::DEBUG);
+        $this->log->debug("Successfully sent $sentbytes bytes.");
         return $sentbytes;
     }
 
@@ -252,7 +252,7 @@ class XMLStream
     public function doReconnect()
     {
         if (!$this->is_server) {
-            $this->log->log("Reconnecting ($this->reconnectTimeout)...", Log::WARNING);
+            $this->log->warning("Reconnecting ($this->reconnectTimeout)...");
             $this->connect($this->reconnectTimeout, false, false);
             $this->reset();
             $this->event('reconnect');
@@ -281,14 +281,14 @@ class XMLStream
             $conntype = 'tcp';
             if ($this->use_ssl)
                 $conntype = 'ssl';
-            $this->log->log("Connecting to $conntype://{$this->server}:{$this->port}");
+            $this->log->notice("Connecting to $conntype://{$this->server}:{$this->port}");
             try {
                 $this->socket = @stream_socket_client("$conntype://{$this->server}:{$this->port}", $errno, $errstr, $timeout, $conflag);
             } catch (\Exception $e) {
                 throw new MyException($e->getMessage());
             }
             if (!$this->socket) {
-                $this->log->log("Could not connect.", Log::ERROR);
+                $this->log->error("Could not connect.");
                 $this->disconnected = true;
                 # Take it easy for a few seconds
                 sleep(min($timeout, 5));
@@ -330,7 +330,7 @@ class XMLStream
      */
     public function event($name, $payload = null)
     {
-        $this->log->log("EVENT: $name", Log::INFO);
+        $this->log->info("EVENT: $name");
         foreach ($this->eventhandlers as $handler) {
             if ($name == $handler[0]) {
                 if ($handler[2] === null) {
@@ -413,7 +413,7 @@ class XMLStream
             }
             $updated = @stream_select($read, $write, $except, $secs, $usecs);
             if ($updated === false) {
-                $this->log->log("Error on stream_select()", Log::DEBUG);
+                $this->log->debug("Error on stream_select()");
                 if ($this->reconnect) {
                     $this->doReconnect();
                 } else {
@@ -435,7 +435,7 @@ class XMLStream
                         return false;
                     }
                 }
-                $this->log->log("RECV: $buff", Log::DEBUG);
+                $this->log->debug("RECV: $buff");
                 xml_parse($this->parser, $buff, false);
             } else {
                 # $updated == 0 means no changes during timeout.
@@ -450,7 +450,7 @@ class XMLStream
     /**
      * Return the log instance
      *
-     * @return Log
+     * @return LoggerInterface
      */
     public function getLog()
     {
@@ -644,7 +644,7 @@ class XMLStream
      */
     public function endXML($parser, $name)
     {
-        #$this->log->log("Ending $name",  Log::INFO);
+        #$this->log->info("Ending $name");
         #print "$name\n";
         if ($this->been_reset) {
             $this->been_reset = false;
@@ -670,7 +670,7 @@ class XMLStream
                         if ($searchxml !== null) {
                             if ($handler[2] === null)
                                 $handler[2] = $this;
-                            $this->log->log("Calling {$handler[1]}", Log::INFO);
+                            $this->log->info("Calling {$handler[1]}");
                             $handler[2]->{$handler[1]}($this->xmlobj[2]);
                         }
                     }
@@ -685,7 +685,7 @@ class XMLStream
                 if ($searchxml !== null and $searchxml->name == $handler[0] and ($searchxml->ns == $handler[1] or (!$handler[1] and $searchxml->ns == $this->default_ns))) {
                     if ($handler[3] === null)
                         $handler[3] = $this;
-                    $this->log->log("Calling {$handler[2]}", Log::INFO);
+                    $this->log->info("Calling {$handler[2]}");
                     $handler[3]->{$handler[2]}($this->xmlobj[2]);
                 }
             }
@@ -751,7 +751,7 @@ class XMLStream
                 return false;
             }
         }
-        $this->log->log("RECV: $buff", Log::DEBUG);
+        $this->log->debug("RECV: $buff");
         xml_parse($this->parser, $buff, false);
     }
 

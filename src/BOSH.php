@@ -2,8 +2,6 @@
 
 namespace EasyXmpp;
 
-use EasyXmpp\Util\Log;
-
 class BOSH extends XMPP
 {
 
@@ -124,7 +122,7 @@ class BOSH extends XMPP
                 $children = $xml->xpath('child::node()');
                 foreach ($children as $child) {
                     $buff = $child->asXML();
-                    $this->log->log("RECV: $buff", Log::DEBUG);
+                    $this->log->debug("RECV: $buff");
                     xml_parse($this->parser, $buff, false);
                 }
             }
@@ -133,7 +131,7 @@ class BOSH extends XMPP
 
     public function send($msg, $timeout = NULL)
     {
-        $this->log->log("SEND: $msg", Log::DEBUG);
+        $this->log->debug("SEND: $msg");
         $msg = new \SimpleXMLElement($msg);
         #$msg->addAttribute('xmlns', 'jabber:client');
         $this->__sendBody($this->__buildBody($msg), true);
