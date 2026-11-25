@@ -105,7 +105,9 @@ class XMPP extends XMLStream
         $this->roster = new Roster();
         $this->track_presence = true;
 
-        $this->stream_start = '<stream:stream to="' . $host . '" xmlns:stream="http://etherx.jabber.org/streams" xmlns="jabber:client" version="1.0">';
+        $this->stream_start = '<stream:stream to="' . $host . '"'
+            . ' xmlns:stream="http://etherx.jabber.org/streams"'
+            . ' xmlns="jabber:client" version="1.0">';
         $this->stream_end = '</stream:stream>';
         $this->default_ns = 'jabber:client';
 
@@ -159,11 +161,13 @@ class XMPP extends XMLStream
         $subject = htmlspecialchars((string)$subject);
 
         $out = "<message from=\"{$this->fulljid}\" to=\"$to\" type='$type'>";
-        if ($subject)
+        if ($subject) {
             $out .= "<subject>$subject</subject>";
+        }
         $out .= "<body>$body</body>";
-        if ($payload)
+        if ($payload) {
             $out .= $payload;
+        }
         $out .= "</message>";
 
         $this->send($out);
@@ -178,28 +182,35 @@ class XMPP extends XMLStream
      */
     public function presence($status = null, $show = 'available', $to = null, $type = 'available', $priority = 0)
     {
-        if ($type == 'available')
+        if ($type == 'available') {
             $type = '';
+        }
         $to = htmlspecialchars((string)$to);
         $status = htmlspecialchars((string)$status);
-        if ($show == 'unavailable')
+        if ($show == 'unavailable') {
             $type = 'unavailable';
+        }
 
         $out = "<presence";
-        if ($to)
+        if ($to) {
             $out .= " to=\"$to\"";
-        if ($type)
+        }
+        if ($type) {
             $out .= " type='$type'";
+        }
         if ($show == 'available' and !$status) {
             $out .= "/>";
         } else {
             $out .= ">";
-            if ($show != 'available')
+            if ($show != 'available') {
                 $out .= "<show>$show</show>";
-            if ($status)
+            }
+            if ($status) {
                 $out .= "<status>$status</status>";
-            if ($priority)
+            }
+            if ($priority) {
                 $out .= "<priority>$priority</priority>";
+            }
             $out .= "</presence>";
         }
 
@@ -259,7 +270,7 @@ class XMPP extends XMLStream
                 $this->send("<presence type='subscribe' to='{$xml->attrs['from']}' from='{$this->fulljid}' />");
             }
             $this->event('subscription_requested', $payload);
-        } else if (array_key_exists('type', $xml->attrs) and $xml->attrs['type'] == 'subscribed') {
+        } elseif (array_key_exists('type', $xml->attrs) and $xml->attrs['type'] == 'subscribed') {
             $this->event('subscription_accepted', $payload);
         } else {
             $this->event('presence', $payload);
@@ -280,7 +291,7 @@ class XMPP extends XMLStream
      * Retrieves the vcard
      *
      */
-    public function getVCard($jid = Null)
+    public function getVCard($jid = null)
     {
         $id = $this->getID();
         $this->addIdHandler($id, 'vcardGetHandler');
@@ -300,10 +311,14 @@ class XMPP extends XMLStream
     {
         if ($xml->hasSub('starttls') and $this->use_encryption) {
             $this->send("<starttls xmlns='urn:ietf:params:xml:ns:xmpp-tls'><required /></starttls>");
-        } else if ($xml->hasSub('bind') and $this->authed) {
+        } elseif ($xml->hasSub('bind') and $this->authed) {
             $id = $this->getId();
             $this->addIdHandler($id, 'resourceBindHandler');
-            $this->send("<iq xmlns=\"jabber:client\" type=\"set\" id=\"$id\"><bind xmlns=\"urn:ietf:params:xml:ns:xmpp-bind\"><resource>{$this->resource}</resource></bind></iq>");
+            $this->send(
+                "<iq xmlns=\"jabber:client\" type=\"set\" id=\"$id\">"
+                . "<bind xmlns=\"urn:ietf:params:xml:ns:xmpp-bind\">"
+                . "<resource>{$this->resource}</resource></bind></iq>"
+            );
         } else {
             $this->log->notice("Attempting Auth...");
             if ($this->password) {
@@ -328,7 +343,11 @@ class XMPP extends XMLStream
                 }
                 switch ($mechanism) {
                     case 'PLAIN':
-                        $this->send("<auth xmlns='urn:ietf:params:xml:ns:xmpp-sasl' mechanism='PLAIN'>" . base64_encode("\x00" . $this->user . "\x00" . $this->password) . "</auth>");
+                        $this->send(
+                            "<auth xmlns='urn:ietf:params:xml:ns:xmpp-sasl' mechanism='PLAIN'>"
+                            . base64_encode("\x00" . $this->user . "\x00" . $this->password)
+                            . "</auth>"
+                        );
                         break;
                     case 'DIGEST-MD5':
                         $this->send("<auth xmlns='urn:ietf:params:xml:ns:xmpp-sasl' mechanism='DIGEST-MD5' />");
@@ -387,8 +406,9 @@ class XMPP extends XMLStream
             $vars['cnonce'] = uniqid(mt_rand(), false);
             $vars['nc'] = '00000001';
             $vars['qop'] = 'auth'; // Force qop to auth
-            if (!isset($vars['digest-uri']))
+            if (!isset($vars['digest-uri'])) {
                 $vars['digest-uri'] = 'xmpp/' . $this->server;
+            }
 
             // now, the magic...
             $a1 = sprintf('%s:%s:%s', $this->user, isset($vars['realm']) ? $vars['realm'] : '', $this->password);
@@ -396,10 +416,21 @@ class XMPP extends XMLStream
                 $a1 = pack('H32', md5($a1)) . ':' . $vars['nonce'] . ':' . $vars['cnonce'];
             }
             $a2 = "AUTHENTICATE:" . $vars['digest-uri'];
-            $password = md5($a1) . ':' . $vars['nonce'] . ':' . $vars['nc'] . ':' . $vars['cnonce'] . ':' . $vars['qop'] . ':' . md5($a2);
+            $password = md5($a1) . ':' . $vars['nonce'] . ':' . $vars['nc']
+                . ':' . $vars['cnonce'] . ':' . $vars['qop'] . ':' . md5($a2);
             $password = md5($password);
-            $response = sprintf('username="%s",realm="%s",nonce="%s",cnonce="%s",nc=%s,qop=%s,digest-uri="%s",response=%s,charset=utf-8',
-                $this->user, isset($vars['realm']) ? $vars['realm'] : '', $vars['nonce'], $vars['cnonce'], $vars['nc'], $vars['qop'], $vars['digest-uri'], $password);
+            $response = sprintf(
+                'username="%s",realm="%s",nonce="%s",cnonce="%s",nc=%s,qop=%s,'
+                . 'digest-uri="%s",response=%s,charset=utf-8',
+                $this->user,
+                isset($vars['realm']) ? $vars['realm'] : '',
+                $vars['nonce'],
+                $vars['cnonce'],
+                $vars['nc'],
+                $vars['qop'],
+                $vars['digest-uri'],
+                $password
+            );
 
             // Send the response
             $response = base64_encode($response);
@@ -429,7 +460,10 @@ class XMPP extends XMLStream
         }
         $id = $this->getId();
         $this->addIdHandler($id, 'sessionStartHandler');
-        $this->send("<iq xmlns='jabber:client' type='set' id='$id'><session xmlns='urn:ietf:params:xml:ns:xmpp-session' /></iq>");
+        $this->send(
+            "<iq xmlns='jabber:client' type='set' id='$id'>"
+            . "<session xmlns='urn:ietf:params:xml:ns:xmpp-session' /></iq>"
+        );
     }
 
     /**
@@ -539,7 +573,9 @@ class XMPP extends XMLStream
         }
         // 注册 ID 回调，用于处理服务器返回的 pong 响应
         $this->addIdHandler($id, "pingResponseHandler");
-        // <iq type='get' to='example.com' id='f5805f84-1a09-4dee-a777-67bfc001e12c:ping' xmlns='jabber:client'><ping xmlns='urn:xmpp:ping'/></iq>
+        // <iq type='get' to='example.com'
+        //     id='f5805f84-1a09-4dee-a777-67bfc001e12c:ping' xmlns='jabber:client'>
+        //     <ping xmlns='urn:xmpp:ping'/></iq>
         $xml = "<iq type='get' to='{$this->host}' id='{$id}'>";
         $xml .= "<ping xmlns='urn:xmpp:ping'/>";
         $xml .= "</iq>";
@@ -557,5 +593,4 @@ class XMPP extends XMLStream
         $this->log->notice("Ping response: " . $id);
         $this->event('pong', $id);
     }
-
 }
