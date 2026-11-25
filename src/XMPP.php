@@ -179,8 +179,9 @@ class XMPP extends XMLStream
      * @param string $status
      * @param string $show
      * @param string $to
+     * @param integer|null $priority
      */
-    public function presence($status = null, $show = 'available', $to = null, $type = 'available', $priority = 0)
+    public function presence($status = null, $show = 'available', $to = null, $type = 'available', $priority = null)
     {
         if ($type == 'available') {
             $type = '';
@@ -198,7 +199,7 @@ class XMPP extends XMLStream
         if ($type) {
             $out .= " type='$type'";
         }
-        if ($show == 'available' and !$status) {
+        if ($show == 'available' and !$status and $priority === null) {
             $out .= "/>";
         } else {
             $out .= ">";
@@ -208,7 +209,7 @@ class XMPP extends XMLStream
             if ($status) {
                 $out .= "<status>$status</status>";
             }
-            if ($priority) {
+            if ($priority !== null) {
                 $out .= "<priority>$priority</priority>";
             }
             $out .= "</presence>";
@@ -241,9 +242,10 @@ class XMPP extends XMLStream
             $payload['type'] = 'chat';
         }
         $payload['from'] = $xml->attrs['from'];
-        $payload['body'] = $xml->sub('body')->data;
+        $body = $xml->sub('body');
+        $payload['body'] = is_object($body) ? $body->data : false;
         $payload['xml'] = $xml;
-        $this->log->info("Message: {$xml->sub('body')->data}");
+        $this->log->info('Message: ' . ($payload['body'] === false ? '' : $payload['body']));
         $this->event('message', $payload);
     }
 
