@@ -139,6 +139,40 @@ php tests/E2E.php   # 或 composer e2e
 
 默认连接 `example.com:7222`，账号密码随意。可用环境变量覆盖：`XMPP_HOST`、`XMPP_PORT`、`XMPP_USER`、`XMPP_PASSWORD`、`XMPP_RESOURCE`、`XMPP_SERVER`、`XMPP_TLS=0`、`XMPP_TIMEOUT`、`XMPP_LOG`。
 
+## MUC 房间（XEP-0045）
+
+只使用标准 XMPP 协议，不依赖 ejabberd 等服务器的管理 HTTP API。
+
+```php
+use EasyXmpp\XEP\MUC;
+
+$muc = new MUC($conn, 'conference.example.com');
+
+// 创建（进入不存在的房间会自动创建），可选房主配置
+$result = $muc->createRoom('room1', 'nick', [
+    'muc#roomconfig_persistentroom' => 0,
+]);
+
+// 进入已有房间
+$muc->join('room1', 'nick');
+
+// 发群消息 / 私聊
+$muc->sendGroupMessage('room1', 'hello');
+$muc->sendPrivateMessage('room1', 'other-nick', 'hi');
+
+// 房间事件（join 后服务端会持续推送）
+$conn->addEventHandler('muc_message', 'onMucMessage', $handler);
+$conn->addEventHandler('muc_occupant_joined', 'onOccupantJoined', $handler);
+$conn->addEventHandler('muc_occupant_left', 'onOccupantLeft', $handler);
+
+// 离开
+$muc->leave('room1', 'nick');
+```
+
+事件：`muc_joined`、`muc_left`、`muc_message`、`muc_private_message`、`muc_occupant_joined`、`muc_occupant_presence`、`muc_occupant_left`、`muc_subject`、`muc_invite`、`muc_error`。
+
+标准 MUC 没有单独的“订阅房间”报文：join 后保持在房间内，服务端就会推送房间 presence 和 groupchat 消息。
+
 ## License
 
 MIT

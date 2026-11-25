@@ -36,7 +36,8 @@
     "scripts": {
         "cs": "phpcs",
         "cs:fix": "phpcbf",
-        "e2e": "php tests/E2E.php"
+        "e2e": "php tests/E2E.php",
+        "muc": "php tests/MucE2E.php"
     },
     "config": {
         "audit": {
